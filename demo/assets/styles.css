@@ -1,0 +1,96 @@
+/*
+ *
+ * General reset
+ *
+ */
+
+* {font-size:100%;font-family:inherit;margin:0;font-weight:normal;vertical-align:baseline;}
+
+/* aka *:not(input,textarea,select,button) */
+html,body,div,span,applet,object,iframe,
+h1,h2,h3,h4,h5,h6,p,blockquote,pre,
+a,abbr,acronym,address,big,cite,code,
+del,dfn,em,img,ins,kbd,q,s,samp,
+small,strike,strong,sub,sup,tt,var,
+b,u,i,
+dl,dt,dd,ol,ul,li,
+fieldset,form,label,legend,
+table,caption,tbody,tfoot,thead,tr,th,td,
+article,aside,canvas,details,embed,
+figure,figcaption,footer,header,hgroup,
+menu,nav,output,ruby,section,summary,
+time,mark,audio,video {padding:0;border:0;}
+
+blockquote:before,blockquote:after,q:before,q:after  {content:"";}
+blockquote,q {quotes:none;}
+
+table {border-collapse:collapse;border-spacing:0;}
+ul,ol {list-style:none;}
+
+/* Explicitly set HTML5 display-roles */
+article,aside,details,figcaption,figure,
+footer,header,hgroup,menu,nav,section {display:block;}
+
+/* Make IE defaults more consistent with other browsers */
+textarea {overflow-y:auto;}
+img {-ms-interpolation-mode:bicubic;}
+
+/* Minimize outlining */
+a:active {outline:0;}
+
+/* Remove unpredictable webkit styling */
+input[type="search"] {-webkit-appearance:none;}
+
+/* Make window scrollbar persist to avoid shifting when moving between pages */
+/*html {overflow-y:scroll;}*/
+
+/* Some preset */
+b,strong {font-weight:bold;}
+i,em {font-style:italic;}
+hr {border:1px solid;border-width:1px 0 0;}
+
+/*---- End reset ----*/
+
+
+body {
+	background:url(bg-paper.jpg);
+	line-height:1.2;
+	padding:1.5em 2em 3em;
+	color:#333;
+	font-family:'Asap', sans-serif;
+}
+
+a {
+	color:#008e97;
+}
+
+h1 {
+	position:relative;
+	width:90%;
+	margin:0;
+	font-size:150%;
+	padding:.3em 0 0;
+	font-weight:bold;
+}
+
+h1 span {
+	display:inline-block;
+	padding:0 0 .8em;
+	background:url(zigzag.png) bottom left repeat-x;
+}
+
+h3 {
+	font-weight:bold;
+	margin:2em 0 .6em;
+}
+
+code {
+	font-family:Monaco, Courier, mono;
+	font-size:90%;
+}
+
+.note {
+	margin:1.5em 0;
+	font-weight:bold;
+}
+

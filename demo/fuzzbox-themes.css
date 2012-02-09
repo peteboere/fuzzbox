@@ -1,0 +1,326 @@
+/*
+------------------ Styling cheatsheet --------------------
+
+Stylable elements
+-----------------
+.fzz-theme-<theme> {}               -> The main container
+.fzz-theme-<theme> #fzz-overlay {}  -> The full-screen overlay behind the box
+.fzz-theme-<theme> #fzz-wrapper {}  -> The full-screen overlay behind the box
+.fzz-theme-<theme> #fzz-inner {}    -> The box wrapper (the visible width)
+.fzz-theme-<theme> #fzz-loading {}  -> The loading overlay
+.fzz-theme-<theme> #fzz-handle {}   -> The drag and drop handle
+.fzz-theme-<theme> #fzz-content {}  -> The content area
+.fzz-theme-<theme> #fzz-caption {}  -> The caption
+.fzz-theme-<theme> #fzz-close {}    -> The close btn
+.fzz-theme-<theme> #fzz-previous {} -> The previous btn
+.fzz-theme-<theme> #fzz-next {}     -> The next btn
+
+Event styling hooks
+-------------------
+.fzz-theme-<theme>.fzz-startup #fzz-<element> {} -> When box is opened and before content is displayed
+.fzz-theme-<theme>.fzz-open #fzz-<element> {}    -> When box is opened and content is displayed
+.fzz-theme-<theme>.fzz-loading #fzz-<element> {} -> When content is loading
+
+Context styling hooks
+---------------------
+.fzz-theme-<theme>.fzz-media-<mediatype> #fzz-<element> {} -> Applies the current item <mediatype>
+
+*/
+
+
+/* ---- Startup state ----- */
+.fzz-startup #fzz-inner,
+.fzz-startup #fzz-close {
+	visibility:hidden;
+	}
+
+.fzz-startup #fzz-wrapper {
+	background:0;
+	}
+
+
+/* ---- Overlay ----- */
+.fzz-theme-slideshow #fzz-overlay,
+.fzz-theme-default #fzz-overlay {
+	opacity: .8;
+	background: #000;
+	}
+
+
+/*-------------------------------- slideshow theme ----------------------------*/
+
+.fzz-theme-slideshow.fzz-open #fzz-wrapper {
+	background:#111;
+	box-shadow: 0 0 10px rgba(0,0,0,.4);
+	}
+
+.fzz-theme-slideshow #fzz-close,
+.fzz-theme-default #fzz-close,
+.fzz-theme-iframe #fzz-close {
+	width: 1.7em;
+	right: -1em;
+	top: -.7em;
+	text-align: center;
+	text-decoration: none;
+	line-height: 1.7em;
+	border-radius: 50%;
+	background: #fff;
+	background: linear-gradient(300deg , #FFFFFF, #ddd);
+	color: #444;
+	box-shadow: 0 2px 2px rgba(0,0,0,.2);
+	}
+
+.fzz-theme-slideshow #fzz-close:after,
+.fzz-theme-default #fzz-close:after,
+.fzz-theme-iframe #fzz-close:after {
+	content: '\D7';
+	font: 25px/0 Arial, sans-serif;
+	vertical-align:middle;
+	}
+
+.fzz-theme-slideshow #fzz-close span,
+.fzz-theme-default #fzz-close span,
+.fzz-theme-iframe #fzz-close span {
+	position:absolute;
+	top:-999px;
+	}
+
+.fzz-theme-slideshow #fzz-caption {
+	position:absolute;
+	width:100%;
+	bottom:0;
+	left:0;
+	background:rgb(0,0,0);
+	background:rgba(0,0,0,.5);
+	}
+
+.fzz-theme-slideshow #fzz-caption .pager,
+.fzz-theme-slideshow #fzz-caption .title {
+	padding:.3em 2%;
+	}
+
+.fzz-theme-slideshow #fzz-caption .pager {
+	float:right;
+	width:27.5%;
+	text-align:right;
+	padding-left:0;
+	}
+
+.fzz-theme-slideshow #fzz-caption a {
+	color:#aaa;
+	text-decoration:none;
+	}
+
+.fzz-theme-slideshow #fzz-caption .title {
+	float:left;
+	width:68%;
+	padding-right:0;
+	}
+
+.fzz-theme-slideshow .disabled {
+	opacity: 0;
+	}
+
+.fzz-theme-slideshow #fzz-next,
+.fzz-theme-slideshow #fzz-previous {
+	position:absolute;
+	top:50%;
+	overflow:hidden;
+	width:2em;
+	margin-top:-2em;
+	line-height:3em;
+	text-align:center;
+	text-decoration:none;
+	background: 0;
+	color: #ddd;
+	text-shadow:0 2px 3px #000;
+	}
+
+.fzz-theme-slideshow #fzz-next {
+	right:-1.2em;
+	}
+
+.fzz-theme-slideshow #fzz-previous {
+	left:-1.2em;
+	}
+
+.fzz-theme-slideshow #fzz-next span,
+.fzz-theme-slideshow #fzz-previous span {
+	position:absolute;
+	top:-999px;
+	}
+
+.fzz-theme-slideshow #fzz-next:after,
+.fzz-theme-slideshow #fzz-previous:after {
+	font: 68px/0 Arial, sans-serif;
+	vertical-align:middle;
+	transition: .2s;
+	}
+
+.fzz-theme-slideshow #fzz-next:after {
+	content:'\203A';
+	}
+
+.fzz-theme-slideshow #fzz-previous:after {
+	content:'\2039';
+	}
+
+.fzz-theme-slideshow #fzz-next:not(.disabled):hover:after,
+.fzz-theme-slideshow #fzz-previous:not(.disabled):hover:after {
+	color:#eee;
+	}
+
+
+/*-------------------------------- solo theme (extends slideshow theme) ----------------------------*/
+
+.fzz-theme-solo #fzz-caption {
+	width:auto;
+	padding:.4em .7em;
+	background:rgba(0,0,0,.7);
+	}
+
+
+/*-------------------------------- modal theme ----------------------------*/
+
+.fzz-theme-modal #fzz-overlay {
+	opacity:.7;
+	background:#fff;
+	}
+
+.fzz-theme-modal #fzz-wrapper {
+	max-width: 300px;
+	overflow:hidden;
+	border-radius: 10px;
+	color:#333;
+	background: #eee;
+	background: linear-gradient(top, #ccc, #eee);
+	box-shadow: 0 5px 8px rgba(0,0,0,.4);
+	}
+
+.fzz-theme-modal #fzz-content {
+	min-height:3em;
+	padding:1.5em 2em;
+	border-top:1px solid #eee;
+	}
+
+.fzz-theme-modal #fzz-handle {
+	display:block;
+	height:27px;
+	border-bottom:1px solid #bbb;
+	border-radius: 8px 8px 0 0;
+	cursor: move;
+	background: #7db9e8;
+	background: linear-gradient( top, #7db9e8, #1e5799 );
+	}
+
+.fzz-theme-modal #fzz-close {
+	top: 2px;
+	right: 0px;
+	padding: 0 10px;
+	text-decoration: none;
+	text-shadow: 0 1px 0 rgba(0,0,0,1);
+	}
+
+.fzz-theme-modal #fzz-close span {
+	position:absolute;
+	top:-999px;
+	}
+
+.fzz-theme-modal #fzz-close:after {
+	content: '\D7';
+	font: bold 20px/1.2 Arial, sans-serif;
+	color:#fff;
+	}
+
+.fzz-theme-modal #fzz-close:hover:after {
+	color:#ddd;
+	}
+
+
+/*-------------------------------- modal confirm ----------------------------*/
+
+.fzz-theme-confirm p {
+	margin:0 0 1em;
+	}
+
+.fzz-theme-confirm button {
+	margin:0 .2em;
+	}
+
+
+/*-------------------------------- html theme ----------------------------*/
+
+.fzz-theme-html #fzz-overlay {
+	opacity: .95;
+	background: url(assets/paper-1.jpg);
+	}
+
+.fzz-theme-html #fzz-wrapper {
+	position: fixed;
+	max-width: none;
+	width: 100%;
+	height: 100%;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	overflow: auto;
+	font: 16px/1.4 "Marker Felt", "Comic Sans MS", cursive;
+	background: 0;
+	color: #442807;
+	}
+
+.fzz-theme-html #fzz-content h1 {
+	font-size: 140%;
+	border: 0;
+	}
+
+.fzz-theme-html #fzz-content p {
+	margin: 1em 0;
+	}
+
+.fzz-theme-html #fzz-close {
+	padding:.7em 1.5em;
+	color: inherit;
+	}
+
+.fzz-theme-html #fzz-close:after {
+	content: ' x';
+	}
+
+.fzz-theme-html #fzz-content {
+	max-width:600px;
+	margin:auto;
+	padding: 2em;
+	text-align:left;
+	}
+
+
+/*-------------------------------- iframe theme ----------------------------*/
+
+.fzz-theme-iframe #fzz-overlay {
+	opacity:.8;
+	background:#000;
+	}
+
+.fzz-theme-iframe #fzz-inner,
+.fzz-theme-iframe #fzz-content {
+	position:absolute;
+	top:0;
+	right:0;
+	bottom:0;
+	left:0;
+	}
+
+.fzz-theme-iframe #fzz-wrapper {
+	position: fixed;
+	max-width: none;
+	margin: auto;
+	top:   40px;
+	right: 40px;
+	bottom:40px;
+	left:  40px;
+	box-shadow: 0 0 10px rgba(0,0,0,1);
+	background:#fff;
+	border:1px solid #ccc;
+	}

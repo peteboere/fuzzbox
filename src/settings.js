@@ -1,4 +1,6 @@
-/* Overridable global settings */
+/* 
+ * Overridable global settings 
+ */
 
 var settings = fuzzbox.settings = {};
 

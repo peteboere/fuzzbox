@@ -1,4 +1,6 @@
-/* Constructor */
+/*
+ * Constructor
+ */
 
 var fuzzbox = $.fuzzbox = function ( options ) {
 
@@ -21,9 +23,15 @@ var fuzzbox = $.fuzzbox = function ( options ) {
 		
 		// Whether to cycle through items in a loop
 		cycle: false,
+
+		// When displaying images shrink wrapper to image dimensions
+		exactFit: false,
 		
 		// Whether clicking outside will not close the box
-		clickOutside: false
+		closeOnClickOutside: true,
+
+		// Whether pressing escape key will close the box
+		closeOnPressEscape: true
 
 	}, options || {} );
 

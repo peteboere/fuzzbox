@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8"/>
+	<title>Fuzzbox demos</title>
+	<link href='http://fonts.googleapis.com/css?family=Asap:400,700' rel='stylesheet' />
+	<link rel="stylesheet" href="assets/styles.css" />
+	
+	<!-- Core fuzzbox styles, mainly structural -->
+	<link rel="stylesheet" href="../fuzzbox.css" />
+
+	<!-- Fuzzbox demo themes. These can be appended to the core stylesheet to save bandwidth -->
+	<link rel="stylesheet" href="fuzzbox-themes.css" />
+
+	<!-- Demo uses a spin.js loading spinner. Not required if you want to create your own image spinner -->
+	<script src="../vendor/spin.min.js"></script>
+
+	<!-- Prefix-free used for prefixless theming. See CssCrush for a server side alternative -->
+	<script src="../vendor/prefixfree.min.js"></script>
+	
+	<!-- jquery.js is not optional -->
+	<script src="../vendor/jquery.js"></script>
+
+	
+	<!-- The fuzzbox script -->
+	<script src="../fuzzbox.js"></script>
+</head>
+<body>
+
+<h1><span>Fuzzbox demos</span></h1>
+
+<!--[if lt IE 9]>
+<p class="note">These demo themes make heavy use of CSS3 so will look a bit plain in Internet Explorer 7/8.</p>
+<![endif]-->
+
+<h3>Grouped images</h3>
+<ul class="grouped">
+	<li><a href='assets/bridge-1.jpg' title="Bridge 1">Image I</a></li>
+	<li><a href='assets/bridge-2.jpg' title="Bridge 2">Image II</a></li>
+	<li><a href='assets/bridge-3.jpg' title="Bridge 3">Image III</a></li>
+</ul>
+
+<h3>Single images</h3>
+<ul class="solo">
+	<li><a href='assets/phonebox.jpg' title="Phone box">Image I</a></li>
+	<li><a href='assets/kitteh.jpg' title="Kitteh">Image II</a></li>
+	<li><a href='assets/banksy.jpg' title="Banksy @ *Bristol Museum*">Image III</a></li>
+</ul>
+
+<h3>Modal</h3>
+<ul class="modal">
+	<li><a href="javascript:;" 
+		data-fzz-theme="modal" 
+		data-fzz-media="html" 
+		data-fzz-html="A draggable modal dialog"
+		>Modal dialog</a></li>
+	<li><a href="javascript:;" 
+		data-fzz-theme="modal confirm" 
+		data-fzz-media="html"
+		data-fzz-html="%3Cp%3EAre%20you%20sure%3F%3C/p%3E%3Cdiv%3E%3Cbutton
+onclick%3D%22window.alert%28%27Ta-da!%27%29%3B%24.fuzzbox.close%28%29%3B%22%3EOK%3C/button%3E%3Cbutton autofocus onclick%3D%22%24.fuzzbox.close%28%29%3B%22%3ECancel%3C/button%3E%3C/div%3E"
+		>Confirm dialog</a></li>
+</ul>
+
+<h3>HTML</h3>
+<ul class="html">
+	<li><a href="assets/cupcake.html" 
+		data-fzz-theme="html" 
+		data-fzz-media-target="[role='main']"
+		>HTML page fetched via Ajax, and filtered via selector <code>[role="main"]</code></a></li>
+	<li><a href="http://en.wikipedia.org/wiki/We%27ve_Got_a_Fuzzbox_and_We%27re_Gonna_Use_It" 
+		data-fzz-media="iframe" 
+		data-fzz-theme="iframe"
+		>External site in an iframe</a></li>
+</ul>
+
+<h3>Video</h3>
+<ul class="media">
+	<li><a href="http://www.youtube.com/watch?v=fzzjgBAaWZw" data-fzz-media="video/youtube"
+		data-fzz-media-ytid="fzzjgBAaWZw"
+		data-fzz-width="640"
+		data-fzz-height="480"
+		data-fzz-media-height="480"
+		>YouTube embed</a></li>
+</ul>
+
+
+<script>
+
+/*
+ * Grouped image examples
+ */
+$( '.grouped a' ).fuzzbox({
+	theme: 'slideshow',
+	group: true, // Set to true to group all matched elements together
+	exactFit: true,
+	transitionFadeSpeed: 250,
+	vAlign: 'middle',
+
+	// Caption callback, can be a string literal
+	caption: function ( item ) {
+		var title,
+			// The list pager html
+			list = [];
+		$.each( item.group, function ( index ) {
+			var num = index + 1;
+			list.push(
+				( index == item.index ) ?
+					'<b>' + num + '</b>' :
+					'<a href="modal:goto(' + num + ')">' + num + '</a>'
+				);
+		})
+		list = '<div class="pager">' + list.join( ' | ' ) + '</div>';
+		title = '<div class="title">' + this.title + '</div>';
+
+		return title + list;
+	}
+});
+
+
+/*
+ * Single image examples
+ */
+$( '.solo a' ).fuzzbox({
+	theme: 'slideshow solo', // Themes can be stacked
+	exactFit: true,
+	caption: function ( item ) {
+		return $.fuzzbox.markdown( this.title || 'No title' );
+	}
+});
+
+
+/*
+ * Modal examples
+ */
+$( '.modal a' ).fuzzbox({
+	closeOnClickOutside: false,
+	closeOnPressEscape: false
+});
+
+
+/*
+ * For these examples the options are being fed in via html attributes
+ * See the source
+ */
+$( '.html a' ).fuzzbox();
+$( '.media a' ).fuzzbox();
+
+
+
+/*******************************************/
+
+// Appending a spin.js spinner to the loading overlay
+// Uses the global fzz_init event handle
+
+$( document ).bind( 'fzz_init', function () {
+
+	var options = {
+		lines:  24,     // The number of lines to draw
+		length: 12,     // The length of each line
+		width:  2,      // The line thickness
+		radius: 100,    // The radius of the inner circle
+		color:  '#eee', // #rgb or #rrggbb
+		speed:  1,      // Rounds per second
+		trail:  60,     // Afterglow percentage
+		shadow: false   // Whether to render a shadow
+	};
+
+	// Load the spinner then append it to the loading overlay
+	var spinner = new Spinner( options ).spin();
+	$.fuzzbox.dom.$loading.append( spinner.el );
+
+	// Centre it
+	$( spinner.el ).css({
+		position: 'absolute',
+		left    : '50%',
+		top     : '50%'
+	});
+});
+
+// Developer messages
+$.fuzzbox.DEBUG = true;
+
+</script>
+
+
+<a href="http://github.com/peteboere/fuzzbox"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://a248.e.akamai.net/assets.github.com/img/7afbc8b248c68eb468279e8c17986ad46549fb71/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub"></a>
+
+</body>
+</html>

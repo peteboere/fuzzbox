@@ -1,53 +1,49 @@
-/* Private class variables and helper functions */
+/*
+ * Private class variables and helper functions
+ */
 
 	// Shortcut ref to active instance
 var instance,
 
 	// Shortcut ref to active item
 	activeItem,
-	
+
 	// Shortcut ref to previous item
 	previousItem,
-	
+
 	// Flag. Set for first item on launch
 	firstItem,
-	
+
 	// Shortcut ref to active instance options
 	options,
 
 	// Flag. Lock UI paging controls during transitions
 	uiLocked,
 
-	// Detect for transition events
-	// https://developer.mozilla.org/en/CSS/CSS_transitions
-	transitionProperty = getVendorStyleProperty( 'transition' ),
-	transitionEndEvents = {
-		'transition'       : 'transitionend',
-		'WebkitTransition' : 'webkitTransitionEnd',
-		'MozTransition'    : 'transitionend',
-		'OTransition'      : 'oTransitionEnd',
-		'msTransition'     : 'MSTransitionEnd'
-	},
-	transitionEndEvent = transitionProperty && transitionEndEvents[ transitionProperty ],
-
 	// MediaType:
 	//    Flexible objects for storing major and minor media types as one
-	MediaType = function ( media ) {
-		// A mediaType object may be passed in, in this case return it
-		if ( typeof media !== 'string' ) {
-			return media;
-		}
-		var self = this,
-			slash = media.indexOf( '/' );
-		self[0] = media;
-		self[1] = null;
-		if ( slash !== -1 ) {
-			self[0] = media.substring( 0, slash );
-			self[1] = media.substring( slash+1 );
-		}
+	Media = function ( media ) {
+
+		var self = this;
+
+		self.update = function ( media ) {
+			// A Media object may be passed in, in this case return it
+			if ( typeof media !== 'string' ) {
+				return media;
+			}
+			var slash = media.indexOf( '/' );
+			self[0] = media;
+			self[1] = null;
+			if ( slash !== -1 ) {
+				self[0] = media.substring( 0, slash );
+				self[1] = media.substring( slash+1 );
+			}
+		};
 		self.toString = function () {
 			return self[0] + ( self[1] ? '/' + self[1] : '' );
 		};
+
+		return self.update( media );
 	},
 
 	// Guess a media type from url file extention
@@ -139,11 +135,6 @@ var instance,
 	// Create fuzzbox media classnames
 	getMediaClassNames = function ( mediaType ) {
 		var classnames = [];
-		// 	pos = mediaType.indexOf( '/' );
-		// if ( pos !== -1 ) {
-		// 	// Generic media type identifier
-		// 	classnames.push( 'fzz-media-' + mediaType.substring( 0, pos ) );
-		// }
 		classnames.push( 'fzz-media-' + mediaType[0] );
 		classnames.push( 'fzz-media-' + ( mediaType+'' ).replace( /\//, '-' ) );
 		return classnames;
@@ -176,7 +167,7 @@ var instance,
 		}
 	},
 
-	setNextPreviousBtns = function ( instance ) {
+	setNextPreviousBtns = function () {
 
 		var itemCount = instance.items.length,
 			$previous = fuzzdom.$previous,
@@ -210,12 +201,13 @@ var _testVideoFormat = function ( format ) {
 			ogg:  'video/ogg; codecs="theora, vorbis"'
 		},
 		audio: {
-			
+
 		}
 	};
 
+// Add utilities to the namespace
 extend( fuzzbox, {
-	MediaType:       MediaType,
+	Media:           Media,
 	guessMediaType:  _guessMediaType,
 	formats:         _formats,
 	testVideoFormat: _testVideoFormat

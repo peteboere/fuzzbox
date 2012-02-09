@@ -1,4 +1,6 @@
-/* Generic shortcuts and helper functions */
+/*
+ * Generic shortcuts and helper functions 
+ */
 
 var win = window,
 	doc = document,
@@ -11,6 +13,10 @@ var win = window,
 	log = function ( msg ) {
 		if ( ! fuzzbox.DEBUG ) { return; }
 		win.console.log( 'fuzzbox: ' + msg );
+	},
+
+	defined = function ( test ) {
+		return typeof test !== 'undefined';
 	},
 
 	capitalize = function ( str ) {
@@ -50,6 +56,18 @@ var win = window,
 		self.c[ property ] = null;
 		return null;
 	},
+
+	// Detect for transition events
+	// https://developer.mozilla.org/en/CSS/CSS_transitions
+	transitionProperty = getVendorStyleProperty( 'transition' ),
+	transitionEndEvents = {
+		'transition'       : 'transitionend',
+		'WebkitTransition' : 'webkitTransitionEnd',
+		'MozTransition'    : 'transitionend',
+		'OTransition'      : 'oTransitionEnd',
+		'msTransition'     : 'MSTransitionEnd'
+	},
+	transitionEndEvent = transitionProperty && transitionEndEvents[ transitionProperty ],
 
 	// Simple one property animation with CSS transitions, fallback to jQuery JS animation
 	animate = function ( $obj, property, value, duration, easing, done ) {
@@ -112,7 +130,7 @@ var win = window,
 			it.className = $.trim( cn );
 		});
 
-		return !additions ? self : self.addClass( additions );
+		return ! additions ? self : self.addClass( additions );
 	},
 
 	defer = function ( callback, timeout ) {

@@ -1,4 +1,6 @@
-/* Prototype */
+/*
+ * Prototype 
+ */
 
 fuzzbox.prototype = {
 
@@ -16,6 +18,9 @@ fuzzbox.prototype = {
 
 	// Index of current active item
 	index: null,
+
+	// The computed box dimensions
+	dims: null,
 
 	// Ref to trigger element (if element was trigger)
 	trigger: null,
@@ -47,9 +52,9 @@ fuzzbox.prototype = {
 		fuzzdom.$next = $inner.find( '#fzz-next' );
 
 		// Set UI elements
-		fuzzdom.$closeBtn.html( options.text.close );
-		fuzzdom.$previous.html( options.text.previous );
-		fuzzdom.$next.html( options.text.next );
+		fuzzdom.$closeBtn.find( '>span' ).html( options.text.close );
+		fuzzdom.$previous.find( '>span' ).html( options.text.previous );
+		fuzzdom.$next.find( '>span' ).html( options.text.next );
 
 		// Establish items
 		// --------------
@@ -109,10 +114,15 @@ fuzzbox.prototype = {
 			}
 
 			// Assign mediaType object
-			it.media = new MediaType( media );
+			it.media = new Media( media );
 
 			// Store attributes
 			it.attr = elemFuzzAttributes || {};
+
+			// HTML attribute for html media items
+			if ( 'html' === it.media[0] && ! defined( it.html ) && it.attr.html ) {
+				it.html = unescape( it.attr.html );
+			}
 
 			if ( elemFuzzAttributes ) {
 				// Media arguments
@@ -125,7 +135,8 @@ fuzzbox.prototype = {
 		});
 
 		// Exit if there's nothing to show
-		var itemCount = items.length;
+		var itemCount = items.length,
+			singleItem = itemCount === 1;
 		if ( ! itemCount ) {
 			log( 'No items to display' );
 			return false;
@@ -150,12 +161,16 @@ fuzzbox.prototype = {
 		// Set activeItem
 		activeItem = self.items[ self.index ];
 
+		// Set active instance
+		instance = fuzzbox.instance = this;
+
 		// Set styling hooks
-		var classnames = [
+		var theme = ( singleItem && activeItem.attr.theme ) || options.theme || 'default',
+			classnames = [
 				'fzz-startup',
 				'fzz-itemcount-' + self.items.length,
-				'fzz-theme-' + ( options.theme || 'default' )
-			].concat( getMediaClassNames( activeItem.media ) );
+				'fzz-theme-' + $.trim( theme ).split( ' ' ).join( ' fzz-theme-' )
+			];
 		fuzzdom.$fuzzbox.attr( 'class', classnames.join( ' ' ) );
 
 		// Set wrapper dimensions
@@ -173,16 +188,12 @@ fuzzbox.prototype = {
 		if ( ! height && singleItem && activeItem.attr.height ) {
 			height = unitTestPatt.test( heightAttr ) ? heightAttr : +heightAttr;
 		}
-		fuzzdom.$wrapper.css({
-			'max-width': width,
-			'min-height': height
-		});
+		// Save computed dims
+		self.dims = { width: width, height: height };
+		fuzzbox.setDims();
 
 		// Set the state of pagination buttons
-		setNextPreviousBtns( self );
-
-		// Set active instance
-		instance = fuzzbox.instance = this;
+		setNextPreviousBtns();
 
 		// Make visible
 		fuzzbox._open();
@@ -192,16 +203,14 @@ fuzzbox.prototype = {
 
 		// Capture the page focussed element then hand focus over to fuzzbox
 		self.trigger = doc.activeElement;
-		// defer( function () {
-		// 	fuzzdom.$wrapper.focus();
-		// });
+		fuzzdom.$wrapper.focus();
 
 		// Set first item flag true
 		firstItem = true;
 
 		// Load the first item, remove startup styling hook when done
 		self.loadItem( activeItem, function () {
-			fuzzdom.$fuzzbox.removeClass( 'fzz-startup' );
+			alterClass( fuzzdom.$fuzzbox, 'fzz-startup', 'fzz-open' );
 			// Set first item flag false
 			firstItem = false;
 		});
@@ -256,7 +265,7 @@ fuzzbox.prototype = {
 				self.clearContentAreas();
 
 				alterClass( fuzzdom.$fuzzbox, 'fzz-media-*', 
-					getMediaClassNames( mediaHandler ).join( ' ' ) );
+							getMediaClassNames( item.media ).join( ' ' ) );
 
 				handler.insert( item, contentArea, item.mediaArgs || options.mediaArgs || {} );
 
@@ -295,15 +304,14 @@ fuzzbox.prototype = {
 			handler.load( item, function () {
 				self.cancelLoadMsg();
 				raiseEvent( 'load' );
-				// defer( function () {
-					if ( item.errorMsg ) {
-						mediaHandler = 'error'
-						handler = fuzzbox.media[ mediaHandler ];
-					}
-					displayItem( function () {
-						insert( item, mediaHandler );
-					});
-				// });
+				if ( item.errorMsg ) {
+					mediaHandler = 'error'
+					handler = fuzzbox.media[ mediaHandler ];
+					item.media.update( mediaHandler );
+				}
+				displayItem( function () {
+					insert( item, mediaHandler );
+				});
 			});
 		}
 
@@ -434,6 +442,8 @@ fuzzbox.prototype = {
 		self.enableElement( fuzzdom.$next );
 		self.cancelLoadMsg();
 		
+		fuzzdom.$fuzzbox.removeClass( 'fzz-open' );
+		
 		// Reset wrapper styles; may have been set by dragging
 		var style = fuzzdom.$wrapper[0].style;
 		style.top =
@@ -456,7 +466,8 @@ fuzzbox.prototype = {
 		
 		fuzzdom.$caption.empty();
 
-		// Avoid latency/display problems
+		// Avoid latency/display problems by reseting src attributes
+		fuzzbox.getIframe( false );
 		var image = fuzzbox.getImage();
 		image.src = image.style.marginTop = '';
 

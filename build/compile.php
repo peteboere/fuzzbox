@@ -27,9 +27,14 @@ $output = implode( "\n\n", $output );
 
 $stream = <<<TPL
 /*!
+ * 
  * fuzzbox.js
  *
- * Versatile media lightbox for jQuery
+ * Flexible media lightbox for jQuery
+ *
+ * Homepage: https://github.com/peteboere/fuzzbox
+ * License: http://www.opensource.org/licenses/mit-license.php
+ * Copyright: (c) 2012 Pete Boere
  *
  */
 (function ($) { // start outer closure
