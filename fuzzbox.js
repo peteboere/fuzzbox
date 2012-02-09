@@ -4,7 +4,7 @@
  *
  * Flexible media lightbox for jQuery
  *
- * Homepage: https://github.com/peteboere/fuzzbox
+ * Project page: https://github.com/peteboere/fuzzbox
  * License: http://www.opensource.org/licenses/mit-license.php
  * Copyright: (c) 2012 Pete Boere
  *
@@ -860,7 +860,7 @@ var instance,
 					fadeTo( $content, 1, transitionFadeSpeed, function () {
 						uiLocked = false;
 					});
-				});
+				}, 13 );
 			});
 		}
 		else {
@@ -1301,10 +1301,6 @@ extend( fuzzbox, {
 
 	getImage: function ( reset ) {
 		var image = fuzzdom.image;
-		if ( false === reset ) {
-			image && ( image.src = '' );
-			return;
-		}
 		if ( ! image ) {
 			image = fuzzdom.image = createElement( 'img' );
 			image.className = 'fzz-hero';

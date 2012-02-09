@@ -159,7 +159,7 @@ var instance,
 					fadeTo( $content, 1, transitionFadeSpeed, function () {
 						uiLocked = false;
 					});
-				});
+				}, 13 );
 			});
 		}
 		else {

@@ -385,10 +385,6 @@ extend( fuzzbox, {
 
 	getImage: function ( reset ) {
 		var image = fuzzdom.image;
-		if ( false === reset ) {
-			image && ( image.src = '' );
-			return;
-		}
 		if ( ! image ) {
 			image = fuzzdom.image = createElement( 'img' );
 			image.className = 'fzz-hero';

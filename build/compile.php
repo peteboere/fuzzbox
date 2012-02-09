@@ -32,7 +32,7 @@ $stream = <<<TPL
  *
  * Flexible media lightbox for jQuery
  *
- * Homepage: https://github.com/peteboere/fuzzbox
+ * Project page: https://github.com/peteboere/fuzzbox
  * License: http://www.opensource.org/licenses/mit-license.php
  * Copyright: (c) 2012 Pete Boere
  *
