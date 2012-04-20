@@ -15,15 +15,18 @@
 	<!-- Demo uses a spin.js loading spinner. Not required if you want to create your own image spinner -->
 	<script src="../vendor/spin.min.js"></script>
 
-	<!-- Prefix-free used for prefixless theming. See CssCrush for a server side alternative -->
+	<!-- Prefix-free used for prefixless theming -->
 	<script src="../vendor/prefixfree.min.js"></script>
-	
-	<!-- jquery.js is not optional -->
+
+	<!-- jquery.js -->
 	<script src="../vendor/jquery.js"></script>
+
+	<!-- CSS3 transitions (optional) -->
+	<script src="../vendor/jquery.transition.js"></script>
 
 	
 	<!-- The fuzzbox script -->
-	<script src="../fuzzbox.js"></script>
+	<script src="../jquery.fuzzbox.js"></script>
 </head>
 <body>
 
@@ -107,7 +110,7 @@ $( '.grouped a' ).fuzzbox({
 			list.push(
 				( index == item.index ) ?
 					'<b>' + num + '</b>' :
-					'<a href="modal:goto(' + num + ')">' + num + '</a>'
+					'<a href="modal:' + num + '">' + num + '</a>'
 				);
 		})
 		list = '<div class="pager">' + list.join( ' | ' ) + '</div>';

@@ -80,7 +80,7 @@ var instance,
 		}
 		// SVGs
 		else if ( /^svgz?$/.test( fileExt ) ) {
-			mediaString = 'image/svg+xml';
+			mediaString = 'image/svg';
 		}
 		// Video
 		else if ( /^(webm|ogv|ogg|ogv|mp4|m4v|3gp)?$/.test( fileExt ) ) {

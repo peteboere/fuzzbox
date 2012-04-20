@@ -11,8 +11,9 @@ var win = window,
 
 	// Log simple messages with an identifying prefix
 	log = function ( msg ) {
-		if ( ! fuzzbox.DEBUG ) { return; }
-		win.console.log( 'fuzzbox: ' + msg );
+		if ( fuzzbox.DEBUG ) {
+			win.console.log( 'fuzzbox: ' + msg );
+		}
 	},
 
 	defined = function ( test ) {
@@ -23,79 +24,14 @@ var win = window,
 		return str.charAt(0).toUpperCase() + str.substring(1);
 	},
 
-	// Get vendor specific CSS property names (if any needed)
-	getVendorStyleProperty = function ( property ) {
-
-		// Cache onto the function itself
-		var self = getVendorStyleProperty;
-		self.c = self.c || {};
-
-		if ( property in self.c ) {
-			return self.c[ property ];
-		}
-
-		var testElemStyle = doc.documentElement.style;
-
-		if ( property in testElemStyle ) {
-			self.c[ property ] = property;
-			return property;
-		}
-		else {
-			var prefixes = 'Webkit Moz O ms Khtml'.split( ' ' ),
-				propertyCap = capitalize( property ),
-				i = 0, 
-				test;
-			for ( ; i < prefixes.length; i++ ) {
-				test = prefixes[i] + propertyCap;
-				if ( test in testElemStyle ) {
-					self.c[ property ] = test;
-					return test; 
-				}
-			}
-		}
-		self.c[ property ] = null;
-		return null;
-	},
-
-	// Detect for transition events
-	// https://developer.mozilla.org/en/CSS/CSS_transitions
-	transitionProperty = getVendorStyleProperty( 'transition' ),
-	transitionEndEvents = {
-		'transition'       : 'transitionend',
-		'WebkitTransition' : 'webkitTransitionEnd',
-		'MozTransition'    : 'transitionend',
-		'OTransition'      : 'oTransitionEnd',
-		'msTransition'     : 'MSTransitionEnd'
-	},
-	transitionEndEvent = transitionProperty && transitionEndEvents[ transitionProperty ],
-
-	// Simple one property animation with CSS transitions, fallback to jQuery JS animation
 	animate = function ( $obj, property, value, duration, easing, done ) {
-		var done = done || function () {};
-		if ( transitionProperty ) {
-			$obj.each( function () {
-				var el = this,
-					$el = $( this ),
-					handler = function () {
-						el.removeEventListener( transitionEndEvent, handler, false );
-						el.style[ transitionProperty ] = '';
-						done();
-					};
-				if ( $el.css( property ) != value ) {
-					el.style[ transitionProperty ] = [ 'all', easing, duration + 'ms' ].join( ' ' );
-					el.addEventListener( transitionEndEvent, handler, false );
-					el.style[ property ] = value;
-				}
-				else {
-					done();
-				}
-			});
-		}
-		else {
-			var props = {};
-			props[property] = value;
-			$obj.animate( props, duration, easing, done );
-		}
+
+		// Search for transition plugin, fall back to jQuery.animate()
+		var animateFunction = $.fn.transition ? 'transition' : 'animate';
+		var map = {};
+		map[ property ] = value;
+
+		$obj[ animateFunction ]( map, duration, easing, done );
 	},
 
 	// Convenience fading function

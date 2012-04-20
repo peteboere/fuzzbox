@@ -60,7 +60,7 @@ extend( fuzzbox, {
 				command = null;
 
 			// Check for pseudo protocol commands:
-			//     next, previous, cancel, goto(n)
+			//     next, previous, cancel, goto(n), n
 			var pseudo = 'modal:',
 				commandArg;
 			if ( target && target.href && target.href.indexOf( pseudo ) == 0 ) {
@@ -69,6 +69,11 @@ extend( fuzzbox, {
 				if ( ( paren = command.indexOf( '(' ) ) !== -1 ) {
 					commandArg = command.substring( paren ).replace( /[\(\)]/g, '' );
 					command = command.substring( 0, paren );
+				}
+				// Plain integer command is shorthand for goto(n)
+				else if ( /^\d$/.test( command ) ) {
+					commandArg = command;
+					command = 'goto';
 				}
 			}
 
@@ -406,7 +411,7 @@ extend( fuzzbox, {
 		}
 		else {
 			widthMap = {
-				'max-width': width || '',
+				'max-width': width || ''
 			};
 			heightMap = {
 				'min-height': instance.dims.height || '',

@@ -1,5 +1,5 @@
 /*!
- * 
+ *
  * fuzzbox.js
  *
  * Flexible media lightbox for jQuery
@@ -10,8 +10,6 @@
  *
  */
 (function ($) { // start outer closure
-	
-//try {
 
 /*
  * Generic shortcuts and helper functions 
@@ -26,8 +24,9 @@ var win = window,
 
 	// Log simple messages with an identifying prefix
 	log = function ( msg ) {
-		if ( ! fuzzbox.DEBUG ) { return; }
-		win.console.log( 'fuzzbox: ' + msg );
+		if ( fuzzbox.DEBUG ) {
+			win.console.log( 'fuzzbox: ' + msg );
+		}
 	},
 
 	defined = function ( test ) {
@@ -38,79 +37,14 @@ var win = window,
 		return str.charAt(0).toUpperCase() + str.substring(1);
 	},
 
-	// Get vendor specific CSS property names (if any needed)
-	getVendorStyleProperty = function ( property ) {
-
-		// Cache onto the function itself
-		var self = getVendorStyleProperty;
-		self.c = self.c || {};
-
-		if ( property in self.c ) {
-			return self.c[ property ];
-		}
-
-		var testElemStyle = doc.documentElement.style;
-
-		if ( property in testElemStyle ) {
-			self.c[ property ] = property;
-			return property;
-		}
-		else {
-			var prefixes = 'Webkit Moz O ms Khtml'.split( ' ' ),
-				propertyCap = capitalize( property ),
-				i = 0, 
-				test;
-			for ( ; i < prefixes.length; i++ ) {
-				test = prefixes[i] + propertyCap;
-				if ( test in testElemStyle ) {
-					self.c[ property ] = test;
-					return test; 
-				}
-			}
-		}
-		self.c[ property ] = null;
-		return null;
-	},
-
-	// Detect for transition events
-	// https://developer.mozilla.org/en/CSS/CSS_transitions
-	transitionProperty = getVendorStyleProperty( 'transition' ),
-	transitionEndEvents = {
-		'transition'       : 'transitionend',
-		'WebkitTransition' : 'webkitTransitionEnd',
-		'MozTransition'    : 'transitionend',
-		'OTransition'      : 'oTransitionEnd',
-		'msTransition'     : 'MSTransitionEnd'
-	},
-	transitionEndEvent = transitionProperty && transitionEndEvents[ transitionProperty ],
-
-	// Simple one property animation with CSS transitions, fallback to jQuery JS animation
 	animate = function ( $obj, property, value, duration, easing, done ) {
-		var done = done || function () {};
-		if ( transitionProperty ) {
-			$obj.each( function () {
-				var el = this,
-					$el = $( this ),
-					handler = function () {
-						el.removeEventListener( transitionEndEvent, handler, false );
-						el.style[ transitionProperty ] = '';
-						done();
-					};
-				if ( $el.css( property ) != value ) {
-					el.style[ transitionProperty ] = [ 'all', easing, duration + 'ms' ].join( ' ' );
-					el.addEventListener( transitionEndEvent, handler, false );
-					el.style[ property ] = value;
-				}
-				else {
-					done();
-				}
-			});
-		}
-		else {
-			var props = {};
-			props[property] = value;
-			$obj.animate( props, duration, easing, done );
-		}
+
+		// Search for transition plugin, fall back to jQuery.animate()
+		var animateFunction = $.fn.transition ? 'transition' : 'animate';
+		var map = {};
+		map[ property ] = value;
+
+		$obj[ animateFunction ]( map, duration, easing, done );
 	},
 
 	// Convenience fading function
@@ -781,7 +715,7 @@ var instance,
 		}
 		// SVGs
 		else if ( /^svgz?$/.test( fileExt ) ) {
-			mediaString = 'image/svg+xml';
+			mediaString = 'image/svg';
 		}
 		// Video
 		else if ( /^(webm|ogv|ogg|ogv|mp4|m4v|3gp)?$/.test( fileExt ) ) {
@@ -976,7 +910,7 @@ extend( fuzzbox, {
 				command = null;
 
 			// Check for pseudo protocol commands:
-			//     next, previous, cancel, goto(n)
+			//     next, previous, cancel, goto(n), n
 			var pseudo = 'modal:',
 				commandArg;
 			if ( target && target.href && target.href.indexOf( pseudo ) == 0 ) {
@@ -985,6 +919,11 @@ extend( fuzzbox, {
 				if ( ( paren = command.indexOf( '(' ) ) !== -1 ) {
 					commandArg = command.substring( paren ).replace( /[\(\)]/g, '' );
 					command = command.substring( 0, paren );
+				}
+				// Plain integer command is shorthand for goto(n)
+				else if ( /^\d$/.test( command ) ) {
+					commandArg = command;
+					command = 'goto';
 				}
 			}
 
@@ -1322,7 +1261,7 @@ extend( fuzzbox, {
 		}
 		else {
 			widthMap = {
-				'max-width': width || '',
+				'max-width': width || ''
 			};
 			heightMap = {
 				'min-height': instance.dims.height || '',
@@ -1509,7 +1448,7 @@ extend( settings, {
 	preloadDelay: 80, 
 
 	// The speed of overlay fade out on closing
-	fadeSpeed:    120,
+	fadeSpeed:    120
 
 });
 
@@ -1578,7 +1517,5 @@ $.fn.fuzzbox = function ( options ) {
 	
 	return $els;
 };
-
-//} catch (ex) { console.error( 'fuzzbox "' + ex + '"' ); }
 
 })( jQuery ); // end outer closure

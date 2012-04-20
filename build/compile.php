@@ -27,7 +27,7 @@ $output = implode( "\n\n", $output );
 
 $stream = <<<TPL
 /*!
- * 
+ *
  * fuzzbox.js
  *
  * Flexible media lightbox for jQuery
@@ -38,24 +38,20 @@ $stream = <<<TPL
  *
  */
 (function ($) { // start outer closure
-	
-//try {
 
 $output
-
-//} catch (ex) { console.error( 'fuzzbox "' + ex + '"' ); }
 
 })( jQuery ); // end outer closure
 
 TPL;
 
 
-$out_file = "$rootDir/fuzzbox.js";
+$out_file = "$rootDir/jquery.fuzzbox.js";
 
 file_put_contents( $out_file, $stream );
 
 if ( isset( $yui_compress ) ) {
-	$min_file = "$rootDir/fuzzbox.min.js";
+	$min_file = "$rootDir/jquery.fuzzbox.min.js";
 	$yui_compressor = '/usr/local/Cellar/yuicompressor/2.4.6/libexec/yuicompressor-2.4.6.jar';
 	system( "java -jar $yui_compressor '$out_file' > '$min_file'" );
 }
