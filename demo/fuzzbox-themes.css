@@ -6,9 +6,9 @@ Stylable elements
 .fzz-theme-<theme> {}               -> The main container
 .fzz-theme-<theme> #fzz-overlay {}  -> The full-screen overlay behind the box
 .fzz-theme-<theme> #fzz-wrapper {}  -> The full-screen overlay behind the box
-.fzz-theme-<theme> #fzz-inner {}    -> The box wrapper (the visible width)
 .fzz-theme-<theme> #fzz-loading {}  -> The loading overlay
 .fzz-theme-<theme> #fzz-handle {}   -> The drag and drop handle
+.fzz-theme-<theme> #fzz-inner {}    -> The content area wrapper (apply padding and borders here)
 .fzz-theme-<theme> #fzz-content {}  -> The content area
 .fzz-theme-<theme> #fzz-caption {}  -> The caption
 .fzz-theme-<theme> #fzz-close {}    -> The close btn
@@ -156,6 +156,12 @@ Context styling hooks
 	vertical-align:middle;
 	transition: .2s;
 	}
+
+/*.fzz-theme-slideshow #fzz-inner {
+	padding: 30px;
+	border: 1px solid #888;
+	border-radius: 8px;
+	}*/
 
 .fzz-theme-slideshow #fzz-next:after {
 	content:'\203A';

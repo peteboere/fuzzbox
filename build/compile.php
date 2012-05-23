@@ -2,8 +2,6 @@
 
 error_reporting( -1 );
 
-// $yui_compress = true;
-
 $rootDir = dirname( __DIR__ );
 
 $files = array(
@@ -27,16 +25,14 @@ $output = implode( "\n\n", $output );
 
 $stream = <<<TPL
 /*!
- *
- * fuzzbox.js
- *
- * Flexible media lightbox for jQuery
- *
- * Project page: https://github.com/peteboere/fuzzbox
- * License: http://www.opensource.org/licenses/mit-license.php
- * Copyright: (c) 2012 Pete Boere
- *
- */
+
+Flexible media lightbox for jQuery
+
+Project page: https://github.com/peteboere/fuzzbox
+License: http://www.opensource.org/licenses/mit-license.php (MIT)
+Copyright: (c) 2012 Pete Boere
+
+*/
 (function ($) { // start outer closure
 
 $output
@@ -50,10 +46,14 @@ $out_file = "$rootDir/jquery.fuzzbox.js";
 
 file_put_contents( $out_file, $stream );
 
-if ( isset( $yui_compress ) ) {
+if ( isset( $compress ) ) {
+	
 	$min_file = "$rootDir/jquery.fuzzbox.min.js";
-	$yui_compressor = '/usr/local/Cellar/yuicompressor/2.4.6/libexec/yuicompressor-2.4.6.jar';
-	system( "java -jar $yui_compressor '$out_file' > '$min_file'" );
+	$command = <<<TPL
+PATH="\$PATH:/usr/local/bin"
+cat '$out_file' | uglifyjs > '$min_file'
+TPL;
+	system( $command );
 }
 
 

@@ -77,7 +77,9 @@ var win = window,
 		return doc.createElement( tag );
 	},
 	
-	empty = function () {};
+	empty = function () {},
+
+	IE = ( !! win.ActiveXObject && +( /msie\s(\d+)/i.exec( navigator.userAgent )[1] ) ) || NaN;
 
 
 // Prevent console from crashing old browsers

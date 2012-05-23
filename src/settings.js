@@ -17,6 +17,6 @@ extend( settings, {
 	preloadDelay: 80, 
 
 	// The speed of overlay fade out on closing
-	fadeSpeed:    120
+	fadeSpeed:    150
 
 });

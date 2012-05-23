@@ -1,14 +1,12 @@
 /*!
- *
- * fuzzbox.js
- *
- * Flexible media lightbox for jQuery
- *
- * Project page: https://github.com/peteboere/fuzzbox
- * License: http://www.opensource.org/licenses/mit-license.php
- * Copyright: (c) 2012 Pete Boere
- *
- */
+
+Flexible media lightbox for jQuery
+
+Project page: https://github.com/peteboere/fuzzbox
+License: http://www.opensource.org/licenses/mit-license.php
+Copyright: (c) 2012 Pete Boere
+
+*/
 (function ($) { // start outer closure
 
 /*
@@ -90,7 +88,9 @@ var win = window,
 		return doc.createElement( tag );
 	},
 	
-	empty = function () {};
+	empty = function () {},
+
+	IE = ( !! win.ActiveXObject && +( /msie\s(\d+)/i.exec( navigator.userAgent )[1] ) ) || NaN;
 
 
 // Prevent console from crashing old browsers
@@ -413,14 +413,17 @@ fuzzbox.prototype = {
 
 			insert = function ( item, mediaHandler ) {
 
+				// Clear the stage
 				self.clearContentAreas();
 
+				// Set the media class hook 
 				alterClass( fuzzdom.$fuzzbox, 'fzz-media-*', 
-							getMediaClassNames( item.media ).join( ' ' ) );
+					getMediaClassNames( item.media ).join( ' ' ) );
 
+				// Insert item content
 				handler.insert( item, contentArea, item.mediaArgs || options.mediaArgs || {} );
 
-				// Choose caption and set its content
+				// Set caption area
 				var caption = item.caption || self.options.caption,
 					element = item.element;
 				if ( 'function' === typeof caption ) {
@@ -429,14 +432,14 @@ fuzzbox.prototype = {
 				}
 				captionArea.innerHTML = caption || ( element && element.title ) || '';
 
-				// Insert event
+				// Fire insert event
 				raiseEvent( 'insert' );
 
 				// Invoke any additional callback passed in
 				callback && callback();
 
 				// Position the hero
-				fuzzbox.positionHero();
+				fuzzbox.positionHero( item );
 
 				// Position the container
 				fuzzbox.position();
@@ -444,6 +447,7 @@ fuzzbox.prototype = {
 
 		// If no loading required just display
 		if ( ! handler.load ) {
+			
 			self.cancelLoadMsg();
 			raiseEvent( 'load' );
 			displayItem( function () {
@@ -452,6 +456,7 @@ fuzzbox.prototype = {
 		}
 		// Load item then display
 		else {
+			
 			handler.load( item, function () {
 				self.cancelLoadMsg();
 				raiseEvent( 'load' );
@@ -587,6 +592,7 @@ fuzzbox.prototype = {
 	},
 
 	cleanup: function () {
+
 		var self = this;
 		self.clearContentAreas( true );
 		self.enableElement( fuzzdom.$previous );
@@ -617,20 +623,22 @@ fuzzbox.prototype = {
 		
 		fuzzdom.$caption.empty();
 
-		// Avoid latency/display problems by reseting src attributes
-		fuzzbox.getIframe( false );
-		var image = fuzzbox.getImage();
-		image.src = image.style.marginTop = '';
-
-		// Reset any vertically centered hero
+		// Avoid latency/display problems by reseting
+		fuzzbox.resetImage();
+		fuzzbox.resetIframe();
+		
+		// Reset vertically centering
 		fuzzdom.$content.find( '.fzz-hero' ).css( 'margin-top', '' );
-
+		
 		if ( all ) {
 			// Clear template area
 			fuzzdom.$inner.empty();
+			fuzzdom.$outer.css( 'top', '' );
+
+			// Hard reset
+			fuzzbox.resetImage( true );
 		}
 	}
-
 };
 
 /*
@@ -1066,6 +1074,7 @@ extend( fuzzbox, {
 		$win.resize( function () {
 			fuzzbox.position();
 			fuzzbox.positionHero();
+			fuzzbox.setHeight();
 		});
 
 		// Hide initially
@@ -1080,7 +1089,6 @@ extend( fuzzbox, {
 		// Flag as done
 		fuzzbox.initialized = true;
 	},
-
 
 	// Internal open method
 	_open: function () {
@@ -1131,6 +1139,7 @@ extend( fuzzbox, {
 	},
 
 	position: function () {
+
 		var outer = fuzzdom.$outer[0],
 			outerHeight = outer.offsetHeight,
 			viewportHeight = $win.height(),
@@ -1155,14 +1164,24 @@ extend( fuzzbox, {
 		outer.style.top = top + 'px';
 	},
 
-	positionHero: function () {
+	positionHero: function ( item ) {
 
 		// If hero object is in the content area we'll center it vertically
 		var $hero = fuzzdom.$content.find( '.fzz-hero' );
 
-		if ( $hero.length ) {
+		// Do not attempt vertical centering if options.exactFit
+		if ( ! options.exactFit && $hero.length ) {
+
 			var hero = $hero[0],
-				diff = fuzzdom.$content[0].offsetHeight - hero.offsetHeight;
+				contentHeight = fuzzdom.$content[0].offsetHeight,
+				heroHeight = hero.offsetHeight;
+
+			// Inserted images suffer latency
+			if ( item && item.image ) {
+				heroHeight = item.image.height;
+			}
+
+			diff = contentHeight - heroHeight;
 			if ( diff > 0 ) {
 				hero.style.marginTop = ( diff / 2 ) + 'px';
 			}
@@ -1204,10 +1223,6 @@ extend( fuzzbox, {
 	// Creating some objects can be expensive
 	getIframe: function ( reset ) {
 		var iframe = fuzzdom.iframe;
-		if ( false === reset ) {
-			iframe && ( iframe.src = '' );
-			return;
-		}
 		if ( ! iframe ) {
 			iframe = fuzzdom.iframe = createElement( 'iframe' );
 		}
@@ -1219,6 +1234,15 @@ extend( fuzzbox, {
 		});
 		return iframe;
 	},
+
+
+	resetIframe: function () {
+		var iframe = fuzzdom.iframe;
+		if ( iframe ) {
+			iframe.src = 'data:text/html,0';
+		}
+	},
+
 
 	getVideo: function () {
 		var video = fuzzdom.video;
@@ -1238,7 +1262,7 @@ extend( fuzzbox, {
 		return audio;
 	},
 
-	getImage: function ( reset ) {
+	getImage: function () {
 		var image = fuzzdom.image;
 		if ( ! image ) {
 			image = fuzzdom.image = createElement( 'img' );
@@ -1246,31 +1270,59 @@ extend( fuzzbox, {
 		}
 		return image;
 	},
+	
+	resetImage: function ( hardReset ) {
 
-	setDims: function ( width, height, fixedHeight ) {
-		var heightMap, widthMap;
-		if ( ! arguments.length ) {
-			// If no arguments given restore dimensions to their original height
-			widthMap = {
-				'max-width': instance.dims.width || ''
-			};
-			heightMap = {
-				'min-height': instance.dims.height || '',
-				'max-height': ''
-			};
+		var image = fuzzdom.image;
+		if ( image ) {
+			if ( hardReset ) {
+				delete fuzzdom.image;
+				fuzzdom.image = fuzzbox.getImage();
+			}
+			else {
+				image.style.marginTop = '';
+			}
 		}
-		else {
-			widthMap = {
-				'max-width': width || ''
-			};
-			heightMap = {
-				'min-height': instance.dims.height || '',
-				'max-height': ''
-			};
-			heightMap[ ( fixedHeight ? 'max' : 'min' ) + '-height' ] = height || '';
+	},
+
+	setDims: function () {
+		fuzzbox.setWidth();
+		fuzzbox.setHeight();
+	},
+
+	setWidth: function ( width ) {
+		widthMap = {
+			'max-width': instance.dims.width || width || ''
+		};
+
+		if ( widthMap[ 'max-width' ] ) {
+
+			// Adjust width to compensate for margin and padding on the inner container
+			//
+			// * Bail if the width set is not a plain integer or using px units
+			// * Units other than pixels not supported at the moment
+			
+			if ( /\d+(px)?$/.test( widthMap[ 'max-width' ]+'' ) ) {
+
+				// Measure the horizontal padding, margin and border on the inner container
+				var $inner = fuzzdom.$inner,
+					horizontalPaddingAndMargin = $inner.outerWidth( true ) - $inner.width();
+		
+				// Add the computed horizontal margin + padding 
+				widthMap[ 'max-width' ] = 
+					parseInt( widthMap[ 'max-width' ], 10 ) +
+				 	horizontalPaddingAndMargin
+			}
 		}
-		fuzzdom.$content.css( heightMap );
+		
 		fuzzdom.$wrapper.css( widthMap );
+	},
+
+	setHeight: function ( height ) {
+		var heightMap = {
+			'height': instance.dims.height || height || ''
+		};
+		fuzzdom.$content.css( heightMap );
 	},
 
 	markdown: function ( string ) {
@@ -1299,12 +1351,14 @@ extend( fuzzbox, {
 	media: {
 
 		error: {
+			
 			insert: function ( item, contentArea, args ) {
 				contentArea.innerHTML = '<p class="fzz-hero">' + item.errorMsg + '</p>';
 			}
 		},
 
 		html: {
+			
 			load: function ( item, done, args ) {
 				if ( ! defined( item.html ) && item.url ) {
 					fuzzbox.loadUrl( item.url, item, function ( item ) {
@@ -1315,6 +1369,7 @@ extend( fuzzbox, {
 					done();
 				}
 			},
+			
 			insert: function ( item, contentArea, args ) {
 				// Optionally filter the html by selector
 				if ( args.target ) {
@@ -1327,27 +1382,38 @@ extend( fuzzbox, {
 		},
 
 		image: {
+			
 			load: function ( item, done, args ) {
 				fuzzbox.loadImage( item.url, item, function ( item ) {
 					done( item.errorMsg );
 				});
 			},
+			
 			insert: function ( item, contentArea, args ) {
+				
 				var image = fuzzbox.getImage();
+				
 				if ( ! image.parentNode ) {
 					contentArea.appendChild( image );
 				}
+
 				image.src = item.image.src;
 
-				// Shrink wrap to image dimensions (using max-width/max-height)
+				// Always set the height
+				// Passing in the item properties as the main image won't always be ready
+				fuzzbox.setHeight( item.image.height );
+
+				// Shrink wrap to image dimensions (using max-width)
 				if ( options.exactFit ) {
-					fuzzbox.setDims( image.width, image.height, true );
+					fuzzbox.setWidth( item.image.width );
 				}
 			}
 		},
 
 		iframe: {
+			
 			insert: function ( item, contentArea, args ) {
+				
 				var iframe = fuzzbox.getIframe(),
 					width = ( 'width' in args ) ? args.width : '100%',
 					height = ( 'height' in args ) ? args.height : '100%',
@@ -1411,7 +1477,9 @@ extend( fuzzbox, {
 		// },
 
 		'video/youtube': {
+			
 			insert: function ( item, contentArea, args ) {
+			
 				var iframe = fuzzbox.getIframe(),
 					width = ( 'width' in args ) ? args.width : '100%',
 					height = ( 'height' in args ) ? args.height : '100%';
@@ -1426,7 +1494,6 @@ extend( fuzzbox, {
 		}
 
 	}
-
 });
 
 /* 
@@ -1448,7 +1515,7 @@ extend( settings, {
 	preloadDelay: 80, 
 
 	// The speed of overlay fade out on closing
-	fadeSpeed:    120
+	fadeSpeed:    150
 
 });
 

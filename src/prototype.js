@@ -262,14 +262,17 @@ fuzzbox.prototype = {
 
 			insert = function ( item, mediaHandler ) {
 
+				// Clear the stage
 				self.clearContentAreas();
 
+				// Set the media class hook 
 				alterClass( fuzzdom.$fuzzbox, 'fzz-media-*', 
-							getMediaClassNames( item.media ).join( ' ' ) );
+					getMediaClassNames( item.media ).join( ' ' ) );
 
+				// Insert item content
 				handler.insert( item, contentArea, item.mediaArgs || options.mediaArgs || {} );
 
-				// Choose caption and set its content
+				// Set caption area
 				var caption = item.caption || self.options.caption,
 					element = item.element;
 				if ( 'function' === typeof caption ) {
@@ -278,14 +281,14 @@ fuzzbox.prototype = {
 				}
 				captionArea.innerHTML = caption || ( element && element.title ) || '';
 
-				// Insert event
+				// Fire insert event
 				raiseEvent( 'insert' );
 
 				// Invoke any additional callback passed in
 				callback && callback();
 
 				// Position the hero
-				fuzzbox.positionHero();
+				fuzzbox.positionHero( item );
 
 				// Position the container
 				fuzzbox.position();
@@ -293,6 +296,7 @@ fuzzbox.prototype = {
 
 		// If no loading required just display
 		if ( ! handler.load ) {
+			
 			self.cancelLoadMsg();
 			raiseEvent( 'load' );
 			displayItem( function () {
@@ -301,6 +305,7 @@ fuzzbox.prototype = {
 		}
 		// Load item then display
 		else {
+			
 			handler.load( item, function () {
 				self.cancelLoadMsg();
 				raiseEvent( 'load' );
@@ -436,6 +441,7 @@ fuzzbox.prototype = {
 	},
 
 	cleanup: function () {
+
 		var self = this;
 		self.clearContentAreas( true );
 		self.enableElement( fuzzdom.$previous );
@@ -466,18 +472,22 @@ fuzzbox.prototype = {
 		
 		fuzzdom.$caption.empty();
 
-		// Avoid latency/display problems by reseting src attributes
-		fuzzbox.getIframe( false );
-		var image = fuzzbox.getImage();
-		image.src = image.style.marginTop = '';
-
-		// Reset any vertically centered hero
+		// Avoid latency/display problems by reseting
+		fuzzbox.resetImage();
+		fuzzbox.resetIframe();
+		
+		// Reset vertically centering
 		fuzzdom.$content.find( '.fzz-hero' ).css( 'margin-top', '' );
-
+		
 		if ( all ) {
 			// Clear template area
 			fuzzdom.$inner.empty();
+			fuzzdom.$outer.css( 'top', '' );
+
+			// Hard reset
+			fuzzbox.resetImage( true );
 		}
 	}
-
 };
+
+
