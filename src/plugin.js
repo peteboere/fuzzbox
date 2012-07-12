@@ -46,7 +46,8 @@ $.fn.fuzzbox = function ( options ) {
 		// Single links
 		else {
 			items = [{
-				url: this.href,
+				// Avoid empty links
+				url: this.getAttribute( 'href' ) ? this.href : null,
 				element: this
 			}];
 		}

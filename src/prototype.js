@@ -83,7 +83,7 @@ fuzzbox.prototype = {
 		// Filter out items that have no content, empty urls or an indetermined media type
 		items = $.grep( items, function ( it, index ) {
 
-			var ok = ( 'html' in it ) || ( it.url && it.url != location.href );
+			var ok = ( 'html' in it ) || it.url;
 			if ( ! ok ) {
 				return false;
 			}
