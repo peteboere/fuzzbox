@@ -1,7 +1,7 @@
-h2. Flexible media lightbox for jQuery
+# Flexible media lightbox for jQuery
 
 
-h3. Why?
+### Why?
 
 There are a lot of jQuery lightboxes out there. A lot of them were designed before responsive design, tablets, smartphones, CSS3 and HTML5. A lot of the good ones have become payware.
 
@@ -16,12 +16,10 @@ Fuzzbox features:
 * Fully keyboard accessible
 
 
-<small>HTML5 video media handler coming soon.</small>
+### Basic usage
 
-
-h3. Basic usage
-
-<pre><code>// As a plugin
+```js
+// As a plugin
 $( 'a' ).fuzzbox();
 
 // Manual
@@ -35,12 +33,6 @@ box.open({
   theme: "gallery"
   url: "images/kitteh.jpg"
 });
-</code></pre>
-
+```
 
 See the "demo page":http://peteboere.github.com/fuzzbox/demo for more examples.
-
-
-
-
-
