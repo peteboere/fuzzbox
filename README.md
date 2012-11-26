@@ -35,4 +35,4 @@ box.open({
 });
 ```
 
-See the "demo page":http://peteboere.github.com/fuzzbox/demo for more examples.
+See the [demo page](http://peteboere.github.com/fuzzbox/demo) for more examples.
