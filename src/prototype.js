@@ -101,29 +101,33 @@ fuzzbox.prototype = {
                 elemFuzzAttributes = getElemFuzzAttributes( el ),
                 media;
 
-            // Html override
+            // html override.
             if ( 'html' in it ) {
                 media = 'html';
             }
-            // Test for explicitly set option
+            // Test for explicitly set option.
             else if ( it.media ) {
                 media = it.media;
             }
-            // Test for an element attribute
+            // Test for an element attribute.
             else if ( elemFuzzAttributes && elemFuzzAttributes.media ) {
                 media = elemFuzzAttributes.media;
             }
-            // Try to guess media type, fallback to 'html'
+            // Use a globally set option.
+            else if ( options.media ) {
+                media = options.media;
+            }
+            // Try to guess media type, fallback to `html`.
             else {
                 if ( !( media = _guessMediaType( it.url ) ) ) {
                     media = 'html';
                 }
             }
 
-            // Assign mediaType object
+            // Assign mediaType object.
             it.media = new Media( media );
 
-            // Store attributes
+            // Store attributes.
             it.attr = elemFuzzAttributes || {};
 
             // HTML attribute for html media items
