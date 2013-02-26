@@ -4,7 +4,7 @@
 
 var fuzzbox = $.fuzzbox = function ( options ) {
 
-    var options = this.options = extend( {
+    this.options = extend({
 
          // 'middle', 'top' or integer (px from top)
         vAlign: 'middle',
@@ -31,7 +31,10 @@ var fuzzbox = $.fuzzbox = function ( options ) {
         closeOnClickOutside: true,
 
         // Whether pressing escape key will close the box
-        closeOnPressEscape: true
+        closeOnPressEscape: true,
+
+        // Viewport width at which shrink-to-fit behaviour is disabled.
+        fittingBreakpoint: 0
 
     }, options || {} );
 

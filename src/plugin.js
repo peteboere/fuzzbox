@@ -2,12 +2,12 @@
 
 $.fn.fuzzbox = function ( options ) {
 
-    var $els = this,
-        options = options || {},
-        html = 'html' in options,
-        url = options.url,
-        group = ( true === options.group ) && !( html || url ),
-        items = [];
+    var $els = this;
+    var options = options || {};
+    var html = 'html' in options;
+    var url = options.url;
+    var group = ( true === options.group ) && !( html || url );
+    var items = [];
 
     if ( group ) {
         $els.each( function () {
@@ -19,10 +19,11 @@ $.fn.fuzzbox = function ( options ) {
     }
 
     $els.click( function () {
-        var box = new $.fuzzbox,
-            startIndex = 0,
-            trigger = this,
-            copyOptions = extend( {}, options );
+
+        var box = new $.fuzzbox;
+        var startIndex = 0;
+        var trigger = this;
+        var copyOptions = extend( {}, options );
 
         copyOptions.element = this;
 

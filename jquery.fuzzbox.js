@@ -5,7 +5,7 @@ Flexible media lightbox for jQuery
 Project: https://github.com/peteboere/fuzzbox
 License: http://www.opensource.org/licenses/mit-license.php (MIT)
 Copyright: (c) 2012 Pete Boere
-Compiled: 2012-12-18 11:12:08 +0000
+Compiled: 2013-02-26 21:24:03 +0000
 
 */
 (function ($) { // start outer closure
@@ -14,92 +14,91 @@ Compiled: 2012-12-18 11:12:08 +0000
  * Generic shortcuts and helper functions 
  */
 
-var win = window,
-    doc = document,
-    $win = $( win ),
-    $doc = $( doc ),
-    extend = $.extend,
-    each = $.each,
+var win = window;
+var doc = document;
+var $win = $( win );
+var $doc = $( doc );
+var extend = $.extend;
+var each = $.each;
 
-    // Log simple messages with an identifying prefix
-    log = function ( msg ) {
-        if ( fuzzbox.DEBUG ) {
-            win.console.log( 'fuzzbox: ' + msg );
+// Log simple messages with an identifying prefix
+var log = function ( msg ) {
+    if ( fuzzbox.DEBUG ) {
+        win.console.log( 'fuzzbox: ' + msg );
+    }
+};
+
+var defined = function ( test ) {
+    return typeof test !== 'undefined';
+};
+
+var capitalize = function ( str ) {
+    return str.charAt(0).toUpperCase() + str.substring(1);
+};
+
+var animate = function ( $obj, property, value, duration, easing, done ) {
+
+    // Search for transition plugin, fall back to jQuery.animate()
+    var animateFunction = $.fn.transition ? 'transition' : 'animate';
+    var map = {};
+    map[ property ] = value;
+
+    $obj[ animateFunction ]( map, duration, easing, done );
+};
+
+// Convenience fading function
+var fadeTo = function ( $obj, value, duration, done ) {
+    animate( $obj, 'opacity', value, duration, 'linear', done );
+};
+
+// Remove element classes with wildcard matching. Optionally add classes.
+// https://gist.github.com/1517285
+var alterClass = function ( $obj, removals, additions ) {
+
+    var self = $obj;
+
+    if ( removals.indexOf( '*' ) === -1 ) {
+        // Use native jQuery methods if there is no wildcard matching
+        self.removeClass( removals );
+        return !additions ? self : self.addClass( additions );
+    }
+
+    var patt = new RegExp( '\\s' +
+        removals.
+        replace( /\*/g, '[A-Za-z0-9-_]+' ).
+        split( ' ' ).
+        join( '\\s|\\s' ) +
+        '\\s', 'g' );
+
+    self.each( function ( i, it ) {
+        var cn = ' ' + it.className + ' ';
+        while ( patt.test( cn ) ) {
+            cn = cn.replace( patt, ' ' );
         }
-    },
+        it.className = $.trim( cn );
+    });
 
-    defined = function ( test ) {
-        return typeof test !== 'undefined';
-    },
+    return ! additions ? self : self.addClass( additions );
+};
 
-    capitalize = function ( str ) {
-        return str.charAt(0).toUpperCase() + str.substring(1);
-    },
+var defer = function ( callback, timeout ) {
+    return setTimeout( callback, timeout || 0 );
+};
 
-    animate = function ( $obj, property, value, duration, easing, done ) {
-
-        // Search for transition plugin, fall back to jQuery.animate()
-        var animateFunction = $.fn.transition ? 'transition' : 'animate';
-        var map = {};
-        map[ property ] = value;
-
-        $obj[ animateFunction ]( map, duration, easing, done );
-    },
-
-    // Convenience fading function
-    fadeTo = function ( $obj, value, duration, done ) {
-        animate( $obj, 'opacity', value, duration, 'linear', done );
-    },
-
-    // Remove element classes with wildcard matching. Optionally add classes.
-    // https://gist.github.com/1517285
-    alterClass = function ( $obj, removals, additions ) {
-
-        var self = $obj;
-
-        if ( removals.indexOf( '*' ) === -1 ) {
-            // Use native jQuery methods if there is no wildcard matching
-            self.removeClass( removals );
-            return !additions ? self : self.addClass( additions );
-        }
-
-        var patt = new RegExp( '\\s' +
-            removals.
-            replace( /\*/g, '[A-Za-z0-9-_]+' ).
-            split( ' ' ).
-            join( '\\s|\\s' ) +
-            '\\s', 'g' );
-
-        self.each( function ( i, it ) {
-            var cn = ' ' + it.className + ' ';
-            while ( patt.test( cn ) ) {
-                cn = cn.replace( patt, ' ' );
-            }
-            it.className = $.trim( cn );
-        });
-
-        return ! additions ? self : self.addClass( additions );
-    },
-
-    defer = function ( callback, timeout ) {
-        return setTimeout( callback, timeout || 0 );
-    },
-
-    createElement = function ( tag ) {
-        return doc.createElement( tag );
-    },
+var createElement = function ( tag ) {
+    return doc.createElement( tag );
+};
     
-    empty = function () {},
+var empty = function () {};
 
-    IE = ( !! win.ActiveXObject && +( /msie\s(\d+)/i.exec( navigator.userAgent )[1] ) ) || NaN;
+var IE = ( !! win.ActiveXObject && +( /msie\s(\d+)/i.exec( navigator.userAgent )[1] ) ) || NaN;
 
 
 // Prevent console from crashing old browsers
 win.console = win.console || { log: empty, error: empty };
 
 
-// Object.keys
-//     Will not override native or other implementation
+// Object.keys shim.
 Object.keys = Object.keys || function ( obj ) {
     var res = [],
         key;
@@ -117,7 +116,7 @@ Object.keys = Object.keys || function ( obj ) {
 
 var fuzzbox = $.fuzzbox = function ( options ) {
 
-    var options = this.options = extend( {
+    this.options = extend({
 
          // 'middle', 'top' or integer (px from top)
         vAlign: 'middle',
@@ -144,7 +143,10 @@ var fuzzbox = $.fuzzbox = function ( options ) {
         closeOnClickOutside: true,
 
         // Whether pressing escape key will close the box
-        closeOnPressEscape: true
+        closeOnPressEscape: true,
+
+        // Viewport width at which shrink-to-fit behaviour is disabled.
+        fittingBreakpoint: 0
 
     }, options || {} );
 
@@ -185,10 +187,10 @@ fuzzbox.prototype = {
         var self = this;
 
         // Extend options.
-        self.options = options = extend( self.options, _options || {} );
+        self.options = OPTIONS = extend( self.options, _options || {} );
 
         // Attach event handlers from options to the instance.
-        $.each( options, function ( key, value ) {
+        $.each( OPTIONS, function ( key, value ) {
             if ( /^on[A-Z]/.test( key ) ) {
                 self[ key ] = value;
             }
@@ -198,43 +200,79 @@ fuzzbox.prototype = {
         fuzzbox.init();
 
         // Set template
-        self.$template = fuzzbox.template[ options.template || 'basic' ];
+        self.$template = fuzzbox.template[ OPTIONS.template || 'basic' ];
 
-        // Append content to the inner wrapper
-        var $inner = fuzzdom.$inner;
+        // Append content to the inner wrapper.
+        var $inner = DOM.$inner;
         $inner.append( self.$template );
 
-        // Get standard placeholders
-        fuzzdom.$content = $inner.find( '#fzz-content' );
-        fuzzdom.$caption = $inner.find( '#fzz-caption' );
-        fuzzdom.$previous = $inner.find( '#fzz-previous' );
-        fuzzdom.$next = $inner.find( '#fzz-next' );
+        // Get standard placeholders.
+        DOM.$content = $inner.find( '#fzz-content' );
+        DOM.$caption = $inner.find( '#fzz-caption' );
+        DOM.$previous = $inner.find( '#fzz-previous' );
+        DOM.$next = $inner.find( '#fzz-next' );
 
-        // Set UI elements
-        fuzzdom.$closeBtn.find( '>span' ).html( options.text.close );
-        fuzzdom.$previous.find( '>span' ).html( options.text.previous );
-        fuzzdom.$next.find( '>span' ).html( options.text.next );
+        // Set UI elements.
+        DOM.$closeBtn.find( '>span' ).html( OPTIONS.text.close );
+        DOM.$previous.find( '>span' ).html( OPTIONS.text.previous );
+        DOM.$next.find( '>span' ).html( OPTIONS.text.next );
 
-        // Establish items
-        // --------------
-        var items = options.items || [],
-            hasHtmlOption = 'html' in options;
+        // Set active instance.
+        INSTANCE = fuzzbox.instance = this;
+
+        // Resolve items.
+        self.items = self.prepareItems( OPTIONS.items || [] );
+        if ( ! self.items ) {
+            return false;
+        }
+
+        // Set dimensions for first displayed item, set class hooks etc.
+        self.prepareStage( true );
+
+        // Make visible.
+        fuzzbox._open();
+
+        raiseEvent( 'open' );
+
+        // Capture the page focussed element then hand focus over to fuzzbox.
+        self.trigger = doc.activeElement;
+        DOM.$wrapper.focus();
+
+        // Set first item flag true.
+        FIRST_ITEM = true;
+
+        // Load the first item, remove startup styling hook when done.
+        self.loadItem( ITEM, function () {
+            defer( function () {
+                alterClass( DOM.$fuzzbox, 'fzz-startup', 'fzz-open' );
+                FIRST_ITEM = false;
+            }, 50 );
+        });
+
+        // Return true to the event handler.
+        return true;
+    },
+
+    prepareItems: function ( items ) {
+
+        var self = this;
+        var hasHtmlOption = 'html' in OPTIONS;
 
         // Invocations with 'html' or 'url' arguments have priority over groups of items
         // 'html' argument has priority over 'url'
-        if ( hasHtmlOption || options.url ) {
+        if ( hasHtmlOption || OPTIONS.url ) {
             var it = {
-                caption: options.caption,
-                mediaArgs: options.mediaArgs,
-                element: options.element,
-                width: options.width,
-                height: options.height
+                caption: OPTIONS.caption,
+                mediaArgs: OPTIONS.mediaArgs,
+                element: OPTIONS.element,
+                width: OPTIONS.width,
+                height: OPTIONS.height
             };
             if ( hasHtmlOption ) {
-                it.html = options.html;
+                it.html = OPTIONS.html;
             }
             else {
-                it.url = options.url;
+                it.url = OPTIONS.url;
             }
             items = [it];
         }
@@ -249,9 +287,9 @@ fuzzbox.prototype = {
 
             // Get media type
             // --------------
-            var el = it.element, // May not be set
-                elemFuzzAttributes = getElemFuzzAttributes( el ),
-                media;
+            var el = it.element; // May not be set
+            var elemFuzzAttributes = getElemFuzzAttributes( el );
+            var media;
 
             // html override.
             if ( 'html' in it ) {
@@ -266,8 +304,8 @@ fuzzbox.prototype = {
                 media = elemFuzzAttributes.media;
             }
             // Use a globally set option.
-            else if ( options.media ) {
-                media = options.media;
+            else if ( OPTIONS.media ) {
+                media = OPTIONS.media;
             }
             // Try to guess media type, fallback to `html`.
             else {
@@ -297,58 +335,64 @@ fuzzbox.prototype = {
             return !!media;
         });
 
-        // Exit if there's nothing to show
-        var itemCount = items.length,
-            singleItem = itemCount === 1;
-        if ( ! itemCount ) {
-            log( 'No items to display' );
-            return false;
-        }
-
         // Decorate items
         each( items, function ( index, it ) {
             it.index = index;
             it.group = items;
         });
 
-        // Assign the set
-        self.items = items;
+        // Exit if there's nothing to show
+        var itemCount = items.length;
+        var singleItem = itemCount === 1;
+        if ( ! itemCount ) {
+            log( 'No items to display' );
+            return false;
+        }
+
+        return items;
+    },
+
+    prepareStage: function ( startup ) {
+
+        var self = this;
 
         // Get start index
-        self.index = options.index || 0;
+        self.index = OPTIONS.index || 0;
+        var itemCount = self.items.length;
         if ( self.index > itemCount-1 ) {
             // If specified index is out of range select last index
             self.index = itemCount-1;
         }
 
         // Set activeItem
-        activeItem = self.items[ self.index ];
-
-        // Set active instance
-        instance = fuzzbox.instance = this;
+        ITEM = self.items[ self.index ];
 
         // Set styling hooks
-        var theme = ( singleItem && activeItem.attr.theme ) || options.theme || 'default',
-            classnames = [
-                'fzz-startup',
+        var singleItem = itemCount === 1;
+        var theme = ( singleItem && ITEM.attr.theme ) || OPTIONS.theme || 'default';
+        var classnames = [
                 'fzz-itemcount-' + self.items.length,
                 'fzz-theme-' + $.trim( theme ).split( ' ' ).join( ' fzz-theme-' )
             ];
-        fuzzdom.$fuzzbox.attr( 'class', classnames.join( ' ' ) );
+
+        // Add startup hook if launching.
+        if ( startup ) {
+            classnames.push( 'fzz-startup' );
+        }
+        DOM.$fuzzbox.attr( 'class', classnames.join( ' ' ) );
 
         // Set wrapper dimensions
-        var width = 'width' in options ? options.width : '',
-            height = 'height' in options ? options.height : '',
-            singleItem = itemCount === 1,
-            widthAttr = activeItem.attr.width,
-            heightAttr = activeItem.attr.height,
-            unitTestPatt = /[^0-9\.]/;
+        var width = 'width' in OPTIONS ? OPTIONS.width : '';
+        var height = 'height' in OPTIONS ? OPTIONS.height : '';
+        var widthAttr = ITEM.attr.width;
+        var heightAttr = ITEM.attr.height;
+        var unitTestPatt = /[^0-9\.]/;
 
         // If a dimension is not set in options and is a single item, look in item attributes
         if ( ! width && singleItem && widthAttr ) {
             width = unitTestPatt.test( widthAttr ) ? widthAttr : +widthAttr;
         }
-        if ( ! height && singleItem && activeItem.attr.height ) {
+        if ( ! height && singleItem && ITEM.attr.height ) {
             height = unitTestPatt.test( heightAttr ) ? heightAttr : +heightAttr;
         }
         // Save computed dims
@@ -356,55 +400,48 @@ fuzzbox.prototype = {
         fuzzbox.setDims();
 
         // Set the state of pagination buttons
-        setNextPreviousBtns();
+        self.setNextPreviousBtns();
+    },
 
-        // Make visible
-        fuzzbox._open();
+    setNextPreviousBtns: function () {
 
-        // open event
-        raiseEvent( 'open' );
+        var self = this;
+        var itemCount = self.items.length;
+        var $previous = DOM.$previous;
+        var $next = DOM.$next;
 
-        // Capture the page focussed element then hand focus over to fuzzbox
-        self.trigger = doc.activeElement;
-        fuzzdom.$wrapper.focus();
-
-        // Set first item flag true
-        firstItem = true;
-
-        // Load the first item, remove startup styling hook when done
-        self.loadItem( activeItem, function () {
-            alterClass( fuzzdom.$fuzzbox, 'fzz-startup', 'fzz-open' );
-            // Set first item flag false
-            firstItem = false;
-        });
-
-        // Return true to the event handler
-        return true;
+        if ( itemCount < 2 ) {
+            self.disableLink( $previous );
+            self.disableLink( $next );
+        }
+        else if ( ! OPTIONS.cycle ) {
+            self[ ( self.index > 0 ? 'enable' : 'disable' ) + 'Link' ]( $previous );
+            self[ ( self.index < itemCount-1 ? 'enable' : 'disable' ) + 'Link' ]( $next );
+        }
     },
 
     loadItem: function ( item, callback ) {
 
-        var self = this,
-            contentArea = fuzzdom.$content[0];
+        var self = this;
+        var contentArea = DOM.$content[0];
 
-        // Set activeItem and previousItem
-        self.previousItem = previousItem = self.activeItem;
-        self.activeItem = activeItem = item;
+        // Set activeItem and previousItem.
+        self.previousItem = PREV_ITEM = self.activeItem;
+        self.activeItem = ITEM = item;
 
-        // Prepare loading message
+        // Prepare loading message.
         self.prepareLoadMsg();
 
-        // Choose handler
-        var mediaHandler = null,
-            major;
+        // Choose handler.
+        var mediaHandler = null;
 
         if ( 'errorMsg' in item ) {
             mediaHandler = 'error';
         }
         else {
 
-            var fullMediaType = item.media.toString(),
-                majorMediaType = item.media[0];
+            var fullMediaType = item.media.toString();
+            var majorMediaType = item.media[0];
 
             // First try full media type
             if ( fuzzbox.media[ fullMediaType ] ) {
@@ -428,15 +465,15 @@ fuzzbox.prototype = {
                 self.clearContentAreas();
 
                 // Set the media class hook
-                alterClass( fuzzdom.$fuzzbox, 'fzz-media-*',
+                alterClass( DOM.$fuzzbox, 'fzz-media-*',
                     getMediaClassNames( item.media ).join( ' ' ) );
 
                 // Insert item content
-                handler.insert( item, contentArea, item.mediaArgs || options.mediaArgs || {} );
+                handler.insert( item, contentArea, item.mediaArgs || OPTIONS.mediaArgs || {} );
 
                 // Set caption area
-                var caption = item.caption || self.options.caption,
-                    element = item.element;
+                var caption = item.caption || OPTIONS.caption;
+                var element = item.element;
                 if ( typeof caption === 'function' ) {
                     // May set to undefined if there is no return value
                     caption = caption.call( element || {}, item );
@@ -445,7 +482,7 @@ fuzzbox.prototype = {
                     caption = caption || ( element && element.title );
                 }
                 if ( caption ) {
-                    fuzzdom.$caption.append( caption );
+                    DOM.$caption.append( caption );
                 }
 
                 // Fire insert event
@@ -489,6 +526,13 @@ fuzzbox.prototype = {
 
     },
 
+    reload: function ( items ) {
+        var self = this;
+        self.items = self.prepareItems( items );
+        self.prepareStage();
+        self.loadItem( self.items[0] );
+    },
+
     prepareLoadMsg: function () {
         var self = this;
         self.loadTimer = setTimeout( function () {
@@ -504,52 +548,57 @@ fuzzbox.prototype = {
     },
 
     showLoadMsg: function () {
-        uiLocked = true;
-        fuzzdom.$loading.show();
-        fuzzdom.$fuzzbox.addClass( 'fzz-loading' );
+        UI_LOCKED = true;
+        DOM.$loading.show();
+        DOM.$fuzzbox.addClass( 'fzz-loading' );
         raiseEvent( 'showLoadMsg' );
     },
 
     hideLoadMsg: function () {
-        uiLocked = false;
-        fuzzdom.$loading.hide();
-        fuzzdom.$fuzzbox.removeClass( 'fzz-loading' );
+        UI_LOCKED = false;
+        DOM.$loading.hide();
+        DOM.$fuzzbox.removeClass( 'fzz-loading' );
         raiseEvent( 'hideLoadMsg' );
     },
 
-    disableElement: function ( $el ) {
-        $el.addClass( 'disabled' ).attr( 'tabindex', -1 ).blur();
+    disableLink: function ( $el ) {
+        var href = $el.attr( 'href' );
+        $el.addClass( 'disabled' )
+            .removeAttr( 'href' )
+            .attr( 'data-href', href );
     },
 
-    enableElement: function ( $el ) {
-        $el.removeClass( 'disabled' ).removeAttr( 'tabindex' );
+    enableLink: function ( $el ) {
+        var href = $el.attr( 'data-href' ) || $el[0].href;
+        $el.removeClass( 'disabled' )
+            .attr( 'href', href );
     },
 
     // 'previous', 'next' or a goto integer (not zero index)
     goTo: function ( dest ) {
-        var self = this,
-            items = self.items,
-            lastIndex = items.length-1,
-            currentIndex = self.index;
 
-        if ( uiLocked || items.length < 2 ) {
+        var self = this;
+        var items = self.items;
+        var lastIndex = items.length-1;
+        var currentIndex = self.index;
+
+        if ( UI_LOCKED || items.length < 2 ) {
             return;
         }
 
-        var cycle = options.cycle,
-            newIndex;
+        var newIndex;
 
         // Previous keyword
         if ( 'previous' == dest ) {
             newIndex = ( currentIndex > 0 ) ? currentIndex - 1 : 0;
-            if ( cycle ) {
+            if ( OPTIONS.cycle ) {
                 newIndex = currentIndex === 0 ? lastIndex : currentIndex - 1;
             }
         }
         // Next keyword
         else if ( 'next' == dest ) {
             newIndex = ( currentIndex < lastIndex ) ? currentIndex + 1 : lastIndex;
-            if ( cycle ) {
+            if ( OPTIONS.cycle ) {
                 newIndex = currentIndex === lastIndex ? 0 : currentIndex + 1;
             }
         }
@@ -565,14 +614,14 @@ fuzzbox.prototype = {
 
         self.index = newIndex;
 
-        setNextPreviousBtns( self );
+        self.setNextPreviousBtns();
 
         self.loadItem( items[ self.index ] );
     },
 
     next: function () {
         var self = this;
-        if ( ! options.cycle && self.index >= self.items.length-1  ) {
+        if ( ! OPTIONS.cycle && self.index >= self.items.length-1  ) {
             return;
         }
         this.goTo( 'next' );
@@ -580,7 +629,7 @@ fuzzbox.prototype = {
 
     previous: function () {
         var self = this;
-        if ( ! options.cycle && self.index <= 0 ) {
+        if ( ! OPTIONS.cycle && self.index <= 0 ) {
             return;
         }
         self.goTo( 'previous' );
@@ -596,8 +645,8 @@ fuzzbox.prototype = {
             raiseEvent( 'close' );
 
             // Hand focus back to the page
-            if ( activeItem.element ) {
-                activeItem.element.focus()
+            if ( ITEM.element ) {
+                ITEM.element.focus()
             }
             else {
                 self.trigger && self.trigger.focus();
@@ -611,45 +660,45 @@ fuzzbox.prototype = {
 
         var self = this;
         self.clearContentAreas( true );
-        self.enableElement( fuzzdom.$previous );
-        self.enableElement( fuzzdom.$next );
+        self.enableLink( DOM.$previous );
+        self.enableLink( DOM.$next );
         self.cancelLoadMsg();
 
-        fuzzdom.$fuzzbox.removeClass( 'fzz-open' );
+        DOM.$fuzzbox.removeClass( 'fzz-open' );
 
         // Reset wrapper styles; may have been set by dragging
-        var style = fuzzdom.$wrapper[0].style;
+        var style = DOM.$wrapper[0].style;
         style.top =
         style.left = '';
-        fuzzbox.instance = instance = null;
+        fuzzbox.instance = INSTANCE = null;
     },
 
     clearContentAreas: function ( all ) {
 
         // If showing consecutive (loaded) images we'll call it a slideshow
         var slideshow =
-                previousItem &&
-                ! previousItem.errorMsg &&
-                'image' === previousItem.media[0] &&
-                'image' === activeItem.media[0];
+                PREV_ITEM &&
+                ! PREV_ITEM.errorMsg &&
+                'image' === PREV_ITEM.media[0] &&
+                'image' === ITEM.media[0];
 
         if ( ! slideshow ) {
-            fuzzdom.$content.empty();
+            DOM.$content.empty();
         }
 
-        fuzzdom.$caption.empty();
+        DOM.$caption.empty();
 
         // Avoid latency/display problems by reseting
         fuzzbox.resetImage();
         fuzzbox.resetIframe();
 
         // Reset vertically centering
-        fuzzdom.$content.find( '.fzz-hero' ).css( 'margin-top', '' );
+        DOM.$content.find( '.fzz-hero' ).css( 'margin-top', '' );
 
         if ( all ) {
             // Clear template area
-            fuzzdom.$inner.empty();
-            fuzzdom.$outer.css( 'top', '' );
+            DOM.$inner.empty();
+            DOM.$outer.css( 'top', '' );
 
             // Hard reset
             fuzzbox.resetImage( true );
@@ -658,213 +707,205 @@ fuzzbox.prototype = {
 };
 
 /*
- * Private class variables and helper functions
+ * Private class variables and helper functions.
  */
 
-    // Shortcut ref to active instance
-var instance,
+// Shortcut ref to active instance.
+var INSTANCE;
 
-    // Shortcut ref to active item
-    activeItem,
+// Shortcut ref to active item.
+var ITEM;
 
-    // Shortcut ref to previous item
-    previousItem,
+// Shortcut ref to previous item.
+var PREV_ITEM;
 
-    // Flag. Set for first item on launch
-    firstItem,
+// Flag. Set for first item on launch.
+var FIRST_ITEM;
 
-    // Shortcut ref to active instance options
-    options,
+// Shortcut ref to active instance options.
+var OPTIONS;
 
-    // Flag. Lock UI paging controls during transitions
-    uiLocked,
+// Flag. Lock UI paging controls during transitions.
+var UI_LOCKED;
 
-    // MediaType:
-    //    Flexible objects for storing major and minor media types as one
-    Media = function ( media ) {
+// Cache for dom references.
+var DOM = fuzzbox.dom = {};
 
-        var self = this;
+// MediaType:
+//    Flexible objects for storing major and minor media types as one
+var Media = function ( media ) {
 
-        self.update = function ( media ) {
-            // A Media object may be passed in, in this case return it
-            if ( typeof media !== 'string' ) {
-                return media;
-            }
-            var slash = media.indexOf( '/' );
-            self[0] = media;
-            self[1] = null;
-            if ( slash !== -1 ) {
-                self[0] = media.substring( 0, slash );
-                self[1] = media.substring( slash+1 );
-            }
-        };
-        self.toString = function () {
-            return self[0] + ( self[1] ? '/' + self[1] : '' );
-        };
+    var self = this;
 
-        return self.update( media );
-    },
-
-    // Guess a media type from url file extention
-    _guessMediaType = function ( url ) {
-
-        var filename = url.toLowerCase(),
-            pos = filename.indexOf( '#' ),
-            mediaString = null;
-
-        // Discard hash and query parts of url
-        if ( pos !== -1 ) {
-            filename = filename.substring( 0, pos );
+    self.update = function ( media ) {
+        // A Media object may be passed in, in this case return it
+        if ( typeof media !== 'string' ) {
+            return media;
         }
-        pos = filename.indexOf( '?' );
-        if ( pos !== -1 ) {
-            filename = filename.substring( 0, pos );
-        }
-
-        // Try to match a file extension, on failure return null
-        var fileExt,
-            m = /\.([a-z0-9]+)$/.exec( filename.replace( /\/+$/, '' ).toLowerCase() );
-        if ( m ) {
-            fileExt = m[1];
-        }
-        else {
-            return mediaString;
-        }
-
-        // Ascertain a media type based on file extension
-
-        // Images
-        if ( m = /^(jpe?g|png|gif|tiff?|webp)$/.exec( fileExt ) ) {
-            mediaString = 'image/' + m[1];
-        }
-        // SVGs
-        else if ( /^svgz?$/.test( fileExt ) ) {
-            mediaString = 'image/svg';
-        }
-        // Video
-        else if ( /^(webm|ogv|ogg|ogv|mp4|m4v|3gp)?$/.test( fileExt ) ) {
-            var minor = 'mp4';
-            if ( /^(ogv|ogg|ogm)$/.test( fileExt ) ) {
-                minor = 'ogg';
-            }
-            else if ( 'webm' === fileExt ) {
-                minor = 'webm';
-            }
-            mediaString = 'video/' + minor;
-        }
-        // Audio
-        else if ( m = /^(mp3)?$/.exec( fileExt ) ) {
-            mediaString = 'audio/' + m[1];
-        }
-        // HTML
-        else if ( /^html?$/.test( fileExt ) ) {
-            mediaString = 'html';
-        }
-
-        return mediaString;
-    },
-
-    // Parse dom element for fuzz attributes
-    getElemFuzzAttributes = function ( element ) {
-        if ( ! element ) { return null; }
-        var out = {}, prefix = 'data-fzz-';
-        // Get all prefixed attributes
-        // Then filter into a hash
-        each( element.attributes, function ( index, attr ) {
-            var name = attr.name,
-                pos = name.indexOf( prefix );
-            if ( 0 === pos ) {
-                name = name.substring( prefix.length );
-                var parts = name.split( '-' ),
-                    prop = parts.shift();
-                if ( ! out[prop] && ! parts.length ) {
-                    out[prop] = attr.value;
-                }
-                // Only one argument per attribute
-                else if ( parts.length ) {
-                    var args = prop + 'Args';
-                    out[args] = out[args] || {};
-                    out[args][parts[0]] = attr.value;
-                }
-            }
-        });
-        return out;
-    },
-
-    // Create fuzzbox media classnames
-    getMediaClassNames = function ( mediaType ) {
-        var classnames = [];
-        classnames.push( 'fzz-media-' + mediaType[0] );
-        classnames.push( 'fzz-media-' + ( mediaType+'' ).replace( /\//, '-' ) );
-        return classnames;
-    },
-
-    raiseEvent = function ( eventType ) {
-        var eventTypeCap = 'on' + capitalize( eventType );
-        $doc.trigger( 'fzz_' + eventType );
-        instance && instance[eventTypeCap] && instance[eventTypeCap].call( instance );
-    },
-
-    // Fade down old item, invoke insertCallback, fadeUp
-    displayItem = function ( insertCallback ) {
-        var option = 'transitionFadeSpeed',
-            transitionFadeSpeed = option in options ? options[ option ] : 0,
-            $content = fuzzdom.$content;
-        if ( transitionFadeSpeed && ! firstItem ) {
-            uiLocked = true;
-            fadeTo( $content, 0, transitionFadeSpeed, function () {
-                insertCallback();
-                defer( function () {
-                    fadeTo( $content, 1, transitionFadeSpeed, function () {
-                        uiLocked = false;
-                    });
-                }, 13 );
-            });
-        }
-        else {
-            insertCallback();
-        }
-    },
-
-    setNextPreviousBtns = function () {
-
-        var itemCount = instance.items.length,
-            $previous = fuzzdom.$previous,
-            $next = fuzzdom.$next;
-
-        if ( itemCount < 2 ) {
-            instance.disableElement( $previous );
-            instance.disableElement( $next );
-        }
-        else if ( ! options.cycle ) {
-            instance[ ( instance.index > 0 ? 'enable' : 'disable' ) + 'Element' ]( $previous );
-            instance[ ( instance.index < itemCount-1 ? 'enable' : 'disable' ) + 'Element' ]( $next );
+        var slash = media.indexOf( '/' );
+        self[0] = media;
+        self[1] = null;
+        if ( slash !== -1 ) {
+            self[0] = media.substring( 0, slash );
+            self[1] = media.substring( slash+1 );
         }
     };
+    self.toString = function () {
+        return self[0] + ( self[1] ? '/' + self[1] : '' );
+    };
+
+    return self.update( media );
+};
+
+// Guess a media type from url file extention
+var _guessMediaType = function ( url ) {
+
+    var filename = url.toLowerCase();
+    var pos = filename.indexOf( '#' );
+    var mediaString = null;
+
+    // Discard hash and query parts of url
+    if ( pos !== -1 ) {
+        filename = filename.substring( 0, pos );
+    }
+    pos = filename.indexOf( '?' );
+    if ( pos !== -1 ) {
+        filename = filename.substring( 0, pos );
+    }
+
+    // Try to match a file extension, on failure return null
+    var fileExt,
+        m = /\.([a-z0-9]+)$/.exec( filename.replace( /\/+$/, '' ).toLowerCase() );
+    if ( m ) {
+        fileExt = m[1];
+    }
+    else {
+        return mediaString;
+    }
+
+    // Ascertain a media type based on file extension
+
+    // Images
+    if ( m = /^(jpe?g|png|gif|tiff?|webp)$/.exec( fileExt ) ) {
+        mediaString = 'image/' + m[1];
+    }
+    // SVGs
+    else if ( /^svgz?$/.test( fileExt ) ) {
+        mediaString = 'image/svg';
+    }
+    // Video
+    else if ( /^(webm|ogv|ogg|ogv|mp4|m4v|3gp)?$/.test( fileExt ) ) {
+        var minor = 'mp4';
+        if ( /^(ogv|ogg|ogm)$/.test( fileExt ) ) {
+            minor = 'ogg';
+        }
+        else if ( 'webm' === fileExt ) {
+            minor = 'webm';
+        }
+        mediaString = 'video/' + minor;
+    }
+    // Audio
+    else if ( m = /^(mp3)?$/.exec( fileExt ) ) {
+        mediaString = 'audio/' + m[1];
+    }
+    // HTML
+    else if ( /^html?$/.test( fileExt ) ) {
+        mediaString = 'html';
+    }
+
+    return mediaString;
+};
+
+// Parse dom element for fuzz attributes
+var getElemFuzzAttributes = function ( element ) {
+
+    if ( ! element ) {
+        return null;
+    }
+    var out = {};
+    var prefix = 'data-fzz-';
+
+    // Get all prefixed attributes
+    // Then filter into a hash
+    each( element.attributes, function ( index, attr ) {
+        var name = attr.name;
+        var pos = name.indexOf( prefix );
+        if ( 0 === pos ) {
+            name = name.substring( prefix.length );
+            var parts = name.split( '-' ),
+                prop = parts.shift();
+            if ( ! out[prop] && ! parts.length ) {
+                out[prop] = attr.value;
+            }
+            // Only one argument per attribute
+            else if ( parts.length ) {
+                var args = prop + 'Args';
+                out[args] = out[args] || {};
+                out[args][parts[0]] = attr.value;
+            }
+        }
+    });
+    return out;
+};
+
+// Create fuzzbox media classnames
+var getMediaClassNames = function ( mediaType ) {
+    var classnames = [];
+    classnames.push( 'fzz-media-' + mediaType[0] );
+    classnames.push( 'fzz-media-' + ( mediaType+'' ).replace( /\//, '-' ) );
+    return classnames;
+};
+
+var raiseEvent = function ( eventType ) {
+    var eventTypeCap = 'on' + capitalize( eventType );
+    $doc.trigger( 'fzz_' + eventType );
+    INSTANCE && INSTANCE[eventTypeCap] && INSTANCE[eventTypeCap].call( INSTANCE );
+};
+
+// Fade down old item, invoke insertCallback, fadeUp
+var displayItem = function ( insertCallback ) {
+
+    var option = 'transitionFadeSpeed';
+    var transitionFadeSpeed = option in OPTIONS ? OPTIONS[ option ] : 0;
+    var $content = DOM.$content;
+
+    if ( transitionFadeSpeed && ! FIRST_ITEM ) {
+        UI_LOCKED = true;
+        fadeTo( $content, 0, transitionFadeSpeed, function () {
+            insertCallback();
+            defer( function () {
+                fadeTo( $content, 1, transitionFadeSpeed, function () {
+                    UI_LOCKED = false;
+                });
+            }, 13 );
+        });
+    }
+    else {
+        insertCallback();
+    }
+};
 
 
 // http://diveintohtml5.info/video.html
 // Video file extentions with their related type/codec identifying strings
 
 var _testVideoFormat = function ( format ) {
-        if ( ! format ) {
-            return null;
-        }
-        var v = fuzzbox.getVideo();
-        return !!( v.canPlayType && v.canPlayType( format ).replace( /no/, '' ) );
+    if ( ! format ) {
+        return null;
+    }
+    var v = fuzzbox.getVideo();
+    return !!( v.canPlayType && v.canPlayType( format ).replace( /no/, '' ) );
+};
+var _formats = {
+    video: {
+        mp4:  'video/mp4; codecs="avc1.42E01E, mp4a.40.2"',
+        webm: 'video/webm; codecs="vp8, vorbis"',
+        ogg:  'video/ogg; codecs="theora, vorbis"'
     },
-    _formats = {
-        video: {
-            mp4:  'video/mp4; codecs="avc1.42E01E, mp4a.40.2"',
-            webm: 'video/webm; codecs="vp8, vorbis"',
-            ogg:  'video/ogg; codecs="theora, vorbis"'
-        },
-        audio: {
+    audio: {}
+};
 
-        }
-    };
-
-// Add utilities to the namespace
+// Add utilities to the namespace.
 extend( fuzzbox, {
     Media:           Media,
     guessMediaType:  _guessMediaType,
@@ -875,10 +916,6 @@ extend( fuzzbox, {
 /*
  * Static methods and properties
  */
-
-// Cache for dom references
-// Shortcut into local scope since we use it often
-var fuzzdom = fuzzbox.dom = {};
 
 extend( fuzzbox, {
 
@@ -911,32 +948,32 @@ extend( fuzzbox, {
             '</div>' );
 
         // Get dom references
-        extend( fuzzdom, {
-            $fuzzbox    : $html,
-            $overlay    : $( '#fzz-overlay', $html ),
-            $loading    : $( '#fzz-loading', $html ),
-            $outer      : $( '#fzz-outer', $html ),
-            $wrapper    : $( '#fzz-wrapper', $html ),
-            $inner      : $( '#fzz-inner', $html ),
-            $closeBtn   : $( '#fzz-close', $html )
-        });
+        DOM.$fuzzbox  = $html,
+        DOM.$overlay  = $( '#fzz-overlay', $html );
+        DOM.$loading  = $( '#fzz-loading', $html );
+        DOM.$outer    = $( '#fzz-outer', $html );
+        DOM.$wrapper  = $( '#fzz-wrapper', $html );
+        DOM.$inner    = $( '#fzz-inner', $html );
+        DOM.$closeBtn = $( '#fzz-close', $html );
 
         // Hide the loading screen
-        fuzzdom.$loading.hide();
+        DOM.$loading.hide();
 
         // Shortcuts
-        var $wrapper = fuzzdom.$wrapper;
+        var $wrapper = DOM.$wrapper;
 
         // Delegate events
         $wrapper.click( function ( e ) {
-            var $target = $( e.target ).closest( 'a' ),
-                target = $target[0],
-                command = null;
+
+            var $target = $( e.target ).closest( 'a' );
+            var target = $target[0];
+            var command = null;
 
             // Check for pseudo protocol commands:
             //     next, previous, cancel, goto(n), n
-            var pseudo = 'modal:',
-                commandArg;
+            var pseudo = 'modal:';
+            var commandArg;
+
             if ( target && target.href && target.href.indexOf( pseudo ) == 0 ) {
                 command = target.href.substring( pseudo.length );
                 var paren;
@@ -976,72 +1013,74 @@ extend( fuzzbox, {
         });
 
         // Handle drag
-        var dragInfo,
-            startDrag = function ( e, $el ) {
-                var pageX = e.pageX,
-                    pageY = e.pageY,
-                    elWidth = $el.width(),
-                    offset = $el.offset(),
-                    left = offset.left,
-                    top = offset.top,
-                    startX = parseInt( $el.css( 'left' ), 10 ) || 0,
-                    startY = parseInt( $el.css( 'top' ), 10 ) || 0,
-                    handleOffsetX = pageX - left,
-                    handleOffsetY = pageY - top,
-                    viewPortWidth = $win.width();
-                dragInfo = {
-                    // Element
-                    el: {
-                        T:  top,
-                        R:  left + elWidth,
-                        L:  left,
-                        sX: startX,
-                        sY: startY,
-                        // Bounds
-                        bT: -( top - startY ),
-                        bL: -( left - startX  ),
-                        bR: -( left - startX ) + ( viewPortWidth - elWidth )
-                    },
-                    // Mouse
-                    m: {
-                        sX: pageX,
-                        sY: pageY,
-                        // Bounds
-                        bT: handleOffsetY,
-                        bR: viewPortWidth - ( elWidth - handleOffsetX ),
-                        bL: handleOffsetX
-                    }
-                };
-                $doc.mousemove( onDragMove );
-            },
-            onDragMove = function ( e ) {
-                var pageX = e.pageX,
-                    pageY = e.pageY,
-                    mouse = dragInfo.m,
-                    el = dragInfo.el,
-                    wrapper = $wrapper[0],
-                    style = wrapper.style,
-                    left, top;
+        var dragInfo;
+        var startDrag = function ( e, $el ) {
+            var pageX = e.pageX;
+            var pageY = e.pageY;
+            var elWidth = $el.width();
+            var offset = $el.offset();
+            var left = offset.left;
+            var top = offset.top;
+            var startX = parseInt( $el.css( 'left' ), 10 ) || 0;
+            var startY = parseInt( $el.css( 'top' ), 10 ) || 0;
+            var handleOffsetX = pageX - left;
+            var handleOffsetY = pageY - top;
+            var viewPortWidth = $win.width();
 
-                if ( pageY < mouse.bT ) {
-                    top = el.bT;
+            dragInfo = {
+                // Element
+                el: {
+                    T:  top,
+                    R:  left + elWidth,
+                    L:  left,
+                    sX: startX,
+                    sY: startY,
+                    // Bounds
+                    bT: -( top - startY ),
+                    bL: -( left - startX  ),
+                    bR: -( left - startX ) + ( viewPortWidth - elWidth )
+                },
+                // Mouse
+                m: {
+                    sX: pageX,
+                    sY: pageY,
+                    // Bounds
+                    bT: handleOffsetY,
+                    bR: viewPortWidth - ( elWidth - handleOffsetX ),
+                    bL: handleOffsetX
                 }
-                else {
-                    top = el.sY + ( pageY - mouse.sY );
-                }
-
-                if ( pageX < mouse.bL ) {
-                    left = el.bL;
-                }
-                else if ( pageX > mouse.bR ) {
-                    left = el.bR;
-                }
-                else {
-                    left = el.sX + ( pageX - mouse.sX );
-                }
-                style.top = top + 'px';
-                style.left = left + 'px';
             };
+            $doc.mousemove( onDragMove );
+        };
+        var onDragMove = function ( e ) {
+            var pageX = e.pageX;
+            var pageY = e.pageY;
+            var mouse = dragInfo.m;
+            var el = dragInfo.el;
+            var wrapper = $wrapper[0];
+            var style = wrapper.style;
+            var left;
+            var top;
+
+            if ( pageY < mouse.bT ) {
+                top = el.bT;
+            }
+            else {
+                top = el.sY + ( pageY - mouse.sY );
+            }
+
+            if ( pageX < mouse.bL ) {
+                left = el.bL;
+            }
+            else if ( pageX > mouse.bR ) {
+                left = el.bR;
+            }
+            else {
+                left = el.sX + ( pageX - mouse.sX );
+            }
+            style.top = top + 'px';
+            style.left = left + 'px';
+        };
         $wrapper.mousedown( function ( e ) {
             var $target = $( e.target );
             if ( $target.hasClass( 'fzz-handle' ) ) {
@@ -1055,8 +1094,8 @@ extend( fuzzbox, {
 
 
         // Optionally close by clicking outside the content
-        $( [ fuzzdom.$overlay[0], fuzzdom.$outer[0] ] ).click( function ( e ) {
-            if ( e.target === this && options.closeOnClickOutside ) {
+        $( [ DOM.$overlay[0], DOM.$outer[0] ] ).click( function ( e ) {
+            if ( e.target === this && OPTIONS.closeOnClickOutside ) {
                 fuzzbox.close();
             }
         });
@@ -1064,7 +1103,7 @@ extend( fuzzbox, {
         // Close with escape key
         $doc.keyup( function ( e ) {
             var keycode = e.keyCode || e.which;
-            if ( keycode === 27 && fuzzbox.opened && options.closeOnPressEscape ) {
+            if ( keycode === 27 && fuzzbox.opened && OPTIONS.closeOnPressEscape ) {
                 fuzzbox.close();
             }
         });
@@ -1094,10 +1133,10 @@ extend( fuzzbox, {
         });
 
         // Hide initially
-        fuzzdom.$fuzzbox.hide();
+        DOM.$fuzzbox.hide();
 
         // Append to the dom
-        $( 'body' ).append( fuzzbox.dom.$fuzzbox );
+        $( 'body' ).append( DOM.$fuzzbox );
 
         // Call any init event handlers
         raiseEvent( 'init' );
@@ -1109,9 +1148,7 @@ extend( fuzzbox, {
     // Internal open method
     _open: function () {
 
-        var $fuzzbox = fuzzdom.$fuzzbox;
-
-        $fuzzbox.show();
+        DOM.$fuzzbox.show();
         fuzzbox.position();
         fuzzbox.opened = true;
     },
@@ -1119,7 +1156,7 @@ extend( fuzzbox, {
     // Internal close method
     _close: function ( callback ) {
 
-        var $fuzzbox = fuzzdom.$fuzzbox;
+        var $fuzzbox = DOM.$fuzzbox;
 
         fadeTo( $fuzzbox, 0, settings.fadeSpeed, function () {
             $fuzzbox.hide().css( 'opacity', '' );
@@ -1136,32 +1173,32 @@ extend( fuzzbox, {
 
     // Close active instance
     close: function () {
-        instance && instance.close();
+        INSTANCE && INSTANCE.close();
     },
 
     // Active instance previous
     previous: function () {
-        instance && instance.previous();
+        INSTANCE && INSTANCE.previous();
     },
 
     // Active instance next
     next: function () {
-        instance && instance.next();
+        INSTANCE && INSTANCE.next();
     },
 
     // Active instance goTo
     goTo: function ( dest ) {
-        instance && instance.goTo( dest );
+        INSTANCE && INSTANCE.goTo( dest );
     },
 
     position: function () {
 
-        var outer = fuzzdom.$outer[0],
-            outerHeight = outer.offsetHeight,
-            viewportHeight = $win.height(),
-            scrollTop = $win.scrollTop(),
-            top = 0,
-            vAlign = options.vAlign;
+        var outer = DOM.$outer[0];
+        var outerHeight = outer.offsetHeight;
+        var viewportHeight = $win.height();
+        var scrollTop = $win.scrollTop();
+        var top = 0;
+        var vAlign = OPTIONS.vAlign;
 
         if ( 'middle' === vAlign ) {
             if ( viewportHeight > outerHeight ) {
@@ -1183,13 +1220,13 @@ extend( fuzzbox, {
     positionHero: function ( item ) {
 
         // If hero object is in the content area we'll center it vertically
-        var $hero = fuzzdom.$content.find( '.fzz-hero' );
+        var $hero = DOM.$content.find( '.fzz-hero' );
 
-        // Do not attempt vertical centering if options.exactFit
-        if ( ! options.exactFit && $hero.length ) {
+        // Do not attempt vertical centering if OPTIONS.exactFit
+        if ( ! OPTIONS.exactFit && $hero.length ) {
 
             var hero = $hero[0],
-                contentHeight = fuzzdom.$content[0].offsetHeight,
+                contentHeight = DOM.$content[0].offsetHeight,
                 heroHeight = hero.offsetHeight;
 
             // Inserted images suffer latency
@@ -1238,9 +1275,9 @@ extend( fuzzbox, {
 
     // Creating some objects can be expensive
     getIframe: function ( reset ) {
-        var iframe = fuzzdom.iframe;
+        var iframe = DOM.iframe;
         if ( ! iframe ) {
-            iframe = fuzzdom.iframe = createElement( 'iframe' );
+            iframe = DOM.iframe = createElement( 'iframe' );
         }
         $( iframe ).attr({
             'class' : 'fzz-hero',
@@ -1253,7 +1290,7 @@ extend( fuzzbox, {
 
 
     resetIframe: function () {
-        var iframe = fuzzdom.iframe;
+        var iframe = DOM.iframe;
         if ( iframe ) {
             iframe.src = 'data:text/html,0';
         }
@@ -1261,27 +1298,27 @@ extend( fuzzbox, {
 
 
     getVideo: function () {
-        var video = fuzzdom.video;
+        var video = DOM.video;
         if ( ! video ) {
-            video = fuzzdom.video = createElement( 'video' );
+            video = DOM.video = createElement( 'video' );
             video.className = 'fzz-hero';
         }
         return video;
     },
 
     getAudio: function () {
-        var audio = fuzzdom.audio;
+        var audio = DOM.audio;
         if ( ! audio ) {
-            audio = fuzzdom.audio = createElement( 'audio' );
+            audio = DOM.audio = createElement( 'audio' );
             audio.className = 'fzz-hero';
         }
         return audio;
     },
 
     getImage: function () {
-        var image = fuzzdom.image;
+        var image = DOM.image;
         if ( ! image ) {
-            image = fuzzdom.image = createElement( 'img' );
+            image = DOM.image = createElement( 'img' );
             image.className = 'fzz-hero';
         }
         return image;
@@ -1289,11 +1326,11 @@ extend( fuzzbox, {
 
     resetImage: function ( hardReset ) {
 
-        var image = fuzzdom.image;
+        var image = DOM.image;
         if ( image ) {
             if ( hardReset ) {
-                delete fuzzdom.image;
-                fuzzdom.image = fuzzbox.getImage();
+                delete DOM.image;
+                DOM.image = fuzzbox.getImage();
             }
             else {
                 image.style.marginTop = '';
@@ -1308,7 +1345,7 @@ extend( fuzzbox, {
 
     setWidth: function ( width ) {
         widthMap = {
-            'max-width': instance.dims.width || width || ''
+            'max-width': INSTANCE.dims.width || width || ''
         };
 
         if ( widthMap[ 'max-width' ] ) {
@@ -1321,8 +1358,8 @@ extend( fuzzbox, {
             if ( /\d+(px)?$/.test( widthMap[ 'max-width' ]+'' ) ) {
 
                 // Measure the horizontal padding, margin and border on the inner container
-                var $inner = fuzzdom.$inner,
-                    horizontalPaddingAndMargin = $inner.outerWidth( true ) - $inner.width();
+                var $inner = DOM.$inner;
+                var horizontalPaddingAndMargin = $inner.outerWidth( true ) - $inner.width();
 
                 // Add the computed horizontal margin + padding
                 widthMap[ 'max-width' ] =
@@ -1331,14 +1368,14 @@ extend( fuzzbox, {
             }
         }
 
-        fuzzdom.$wrapper.css( widthMap );
+        DOM.$wrapper.css( widthMap );
     },
 
     setHeight: function ( height ) {
         var heightMap = {
-            'height': instance.dims.height || height || ''
+            'height': INSTANCE.dims.height || height || ''
         };
-        fuzzdom.$content.css( heightMap );
+        DOM.$content.css( heightMap );
     },
 
     markdown: function ( string ) {
@@ -1405,25 +1442,55 @@ extend( fuzzbox, {
                 });
             },
 
+            // insert: function ( item, contentArea, args ) {
+            // 
+            //     var image = fuzzbox.getImage();
+            // 
+            //     if ( ! image.parentNode ) {
+            //         contentArea.appendChild( image );
+            //     }
+            // 
+            //     image.width = item.image.width;
+            //     image.height = item.image.height;
+            //     image.src = item.image.src;
+            // 
+            //     // Always set the height
+            //     // Passing in the item properties as the main image won't always be ready
+            //     fuzzbox.setHeight( item.image.height );
+            // 
+            //     // Shrink wrap to image dimensions (using max-width)
+            //     if ( OPTIONS.exactFit ) {
+            //         fuzzbox.setWidth( item.image.width );
+            //     }
+            // },
+
             insert: function ( item, contentArea, args ) {
 
                 var image = fuzzbox.getImage();
-
-                if ( ! image.parentNode ) {
-                    contentArea.appendChild( image );
-                }
-
-                image.width = item.image.width;
-                image.height = item.image.height;
                 image.src = item.image.src;
 
-                // Always set the height
-                // Passing in the item properties as the main image won't always be ready
-                fuzzbox.setHeight( item.image.height );
+                var imgWidth = image.naturalWidth || item.image.width;
+                var imgHeight = image.naturalHeight || item.image.height;
 
-                // Shrink wrap to image dimensions (using max-width)
-                if ( options.exactFit ) {
-                    fuzzbox.setWidth( item.image.width );
+                // Set the height if the content is smaller than the window viewport.
+                // The main image won't always be rendered on time.
+                var winWidth = $win.width();
+                var breakpoint = OPTIONS.fittingBreakpoint;
+                var applyBreakpoint = breakpoint && ( winWidth < breakpoint );
+
+                if ( winWidth > imgWidth || applyBreakpoint ) {
+
+                    fuzzbox.setHeight( imgHeight );
+
+                    // Shrink wrap to image dimensions (using max-width).
+                    if ( OPTIONS.exactFit ) {
+                        fuzzbox.setWidth( imgWidth );
+                    }
+                }
+
+                // Append.
+                if ( ! image.parentNode ) {
+                    contentArea.appendChild( image );
                 }
             }
         },
@@ -1432,10 +1499,10 @@ extend( fuzzbox, {
 
             insert: function ( item, contentArea, args ) {
 
-                var iframe = fuzzbox.getIframe(),
-                    width = ( 'width' in args ) ? args.width : '100%',
-                    height = ( 'height' in args ) ? args.height : '100%',
-                    opts = {
+                var iframe = fuzzbox.getIframe();
+                var width = ( 'width' in args ) ? args.width : '100%';
+                var height = ( 'height' in args ) ? args.height : '100%';
+                var opts = {
                         src   : item.url || args.url,
                         width : width,
                         height: height
@@ -1498,9 +1565,9 @@ extend( fuzzbox, {
 
             insert: function ( item, contentArea, args ) {
 
-                var iframe = fuzzbox.getIframe(),
-                    width = ( 'width' in args ) ? args.width : '100%',
-                    height = ( 'height' in args ) ? args.height : '100%';
+                var iframe = fuzzbox.getIframe();
+                var width = ( 'width' in args ) ? args.width : '100%';
+                var height = ( 'height' in args ) ? args.height : '100%';
 
                 $( iframe ).attr({
                     src   : 'http://www.youtube.com/embed/' + args.ytid,
@@ -1541,12 +1608,12 @@ extend( settings, {
 
 $.fn.fuzzbox = function ( options ) {
 
-    var $els = this,
-        options = options || {},
-        html = 'html' in options,
-        url = options.url,
-        group = ( true === options.group ) && !( html || url ),
-        items = [];
+    var $els = this;
+    var options = options || {};
+    var html = 'html' in options;
+    var url = options.url;
+    var group = ( true === options.group ) && !( html || url );
+    var items = [];
 
     if ( group ) {
         $els.each( function () {
@@ -1558,10 +1625,11 @@ $.fn.fuzzbox = function ( options ) {
     }
 
     $els.click( function () {
-        var box = new $.fuzzbox,
-            startIndex = 0,
-            trigger = this,
-            copyOptions = extend( {}, options );
+
+        var box = new $.fuzzbox;
+        var startIndex = 0;
+        var trigger = this;
+        var copyOptions = extend( {}, options );
 
         copyOptions.element = this;
 
