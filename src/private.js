@@ -142,16 +142,24 @@ var getElemFuzzAttributes = function ( element ) {
 
 // Create fuzzbox media classnames
 var getMediaClassNames = function ( mediaType ) {
+
     var classnames = [];
     classnames.push( 'fzz-media-' + mediaType[0] );
     classnames.push( 'fzz-media-' + ( mediaType+'' ).replace( /\//, '-' ) );
     return classnames;
 };
 
-var raiseEvent = function ( eventType ) {
-    var eventTypeCap = 'on' + capitalize( eventType );
-    $doc.trigger( 'fzz_' + eventType );
-    INSTANCE && INSTANCE[eventTypeCap] && INSTANCE[eventTypeCap].call( INSTANCE );
+var raiseEvent = function (eventType, eventObject) {
+
+    var eventTypeCap = 'on' + capitalize(eventType);
+    var eventObject = eventObject || {};
+    eventObject.type = eventType;
+
+    $doc.trigger('fzz_' + eventType, eventObject);
+
+    if (INSTANCE && INSTANCE[eventTypeCap]) {
+        INSTANCE[eventTypeCap].call(INSTANCE, eventObject);
+    }
 };
 
 // Fade down old item, invoke insertCallback, fadeUp

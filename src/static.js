@@ -4,24 +4,26 @@
 
 extend( fuzzbox, {
 
-    // Debug mode for logging messages to the console
+    // Debug mode for logging messages to the console.
     DEBUG: false,
 
-    // Status
+    // Status.
     opened: false,
 
-    // Reference to active fuzzbox instance (if any)
+    // Reference to active fuzzbox instance (if any).
     instance: null,
 
     // Inititalization:
-    //     Called once on first launch, subsequent calls will return early
+    //     Called once on first launch, subsequent calls will bounce.
     init: function () {
 
-        if ( fuzzbox.initialized ) { return; }
+        if (fuzzbox.initialized) {
+            return;
+        }
 
         // Create base html
         var $html = $(
-            '<div id="fuzzbox">' +
+            '<div id="fuzzbox" role="dialog">' +
                 '<div id="fzz-overlay"></div>' +
                 '<div id="fzz-outer">' +
                     '<div id="fzz-wrapper" tabindex="0">' +
@@ -34,12 +36,12 @@ extend( fuzzbox, {
 
         // Get dom references
         DOM.$fuzzbox  = $html,
-        DOM.$overlay  = $( '#fzz-overlay', $html );
-        DOM.$loading  = $( '#fzz-loading', $html );
-        DOM.$outer    = $( '#fzz-outer', $html );
-        DOM.$wrapper  = $( '#fzz-wrapper', $html );
-        DOM.$inner    = $( '#fzz-inner', $html );
-        DOM.$closeBtn = $( '#fzz-close', $html );
+        DOM.$overlay  = $('#fzz-overlay', $html);
+        DOM.$loading  = $('#fzz-loading', $html);
+        DOM.$outer    = $('#fzz-outer', $html);
+        DOM.$wrapper  = $('#fzz-wrapper', $html);
+        DOM.$inner    = $('#fzz-inner', $html);
+        DOM.$closeBtn = $('#fzz-close', $html);
 
         // Hide the loading screen
         DOM.$loading.hide();
@@ -166,7 +168,9 @@ extend( fuzzbox, {
             style.top = top + 'px';
             style.left = left + 'px';
         };
-        $wrapper.mousedown( function ( e ) {
+
+        $wrapper.on('mousedown.fuzzbox', function (e) {
+
             var $target = $( e.target );
             if ( $target.hasClass( 'fzz-handle' ) ) {
                 startDrag( e, $wrapper );
@@ -185,16 +189,16 @@ extend( fuzzbox, {
             }
         });
 
-        // Close with escape key
-        $doc.keyup( function ( e ) {
+        // Close with escape key.
+        $doc.on('keyup.fuzzbox', function (e) {
             var keycode = e.keyCode || e.which;
             if ( keycode === 27 && fuzzbox.opened && OPTIONS.closeOnPressEscape ) {
                 fuzzbox.close();
             }
         });
 
-        // Keyboard pagination
-        $doc.keydown( function ( e ) {
+        // Keyboard pagination.
+        $doc.on('keydown.fuzzbox', function (e) {
             var keycode = e.keyCode || e.which;
             if ( fuzzbox.opened ) {
                 if ( 37 === keycode ) {
@@ -210,23 +214,25 @@ extend( fuzzbox, {
             }
         });
 
-        // Handle window resize events
-        $win.resize( function () {
+        // Handle window resize events.
+        $win.on('resize.fuzzbox', function (e) {
+            if (! INSTANCE) {
+                return;
+            }
             fuzzbox.position();
             fuzzbox.positionHero();
             fuzzbox.setHeight();
         });
 
-        // Hide initially
+        // Hide initially.
         DOM.$fuzzbox.hide();
 
-        // Append to the dom
-        $( 'body' ).append( DOM.$fuzzbox );
+        // Append to the dom.
+        $('body').append(DOM.$fuzzbox);
 
-        // Call any init event handlers
-        raiseEvent( 'init' );
+        raiseEvent('init');
 
-        // Flag as done
+        // Flag as done.
         fuzzbox.initialized = true;
     },
 
@@ -326,9 +332,32 @@ extend( fuzzbox, {
         }
     },
 
+    setAriaLabel: function (elementId, context) {
+
+        var $label = elementId && $('#' + elementId, context || document);
+        if ($label && $label.length) {
+            DOM.$fuzzbox.attr('aria-labelledby', elementId);
+        }
+        else {
+            DOM.$fuzzbox.removeAttr('aria-labelledby');
+        }
+    },
+
+    setAriaDescription: function (elementId, context) {
+
+        var $label = elementId && $('#' + elementId, context || document);
+        if ($label && $label.length) {
+            DOM.$fuzzbox.attr('aria-describedby', elementId);
+        }
+        else {
+            DOM.$fuzzbox.removeAttr('aria-describedby');
+        }
+    },
+
     loadUrl: function ( url, item, callback ) {
-        // Html resources
-        $.ajax({
+
+        // HTML resources
+        var options = {
             url: url,
             success: function ( data ) {
                 item.html = data;
@@ -338,11 +367,20 @@ extend( fuzzbox, {
                 item.errorMsg = status;
                 callback( item );
             }
-        });
+        };
+
+        if (item.data) {
+            options.data = item.data;
+        }
+        if (item.postData) {
+            options.data = item.postData;
+            options.type = 'POST';
+        }
+        $.ajax(options);
     },
 
     loadImage: function ( url, item, callback ) {
-        // Images and svgs
+
         var img = new Image;
         img.onload = function () {
             item.image = img;
@@ -360,6 +398,7 @@ extend( fuzzbox, {
 
     // Creating some objects can be expensive
     getIframe: function ( reset ) {
+
         var iframe = DOM.iframe;
         if ( ! iframe ) {
             iframe = DOM.iframe = createElement( 'iframe' );

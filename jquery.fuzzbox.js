@@ -5,13 +5,13 @@ Flexible media lightbox for jQuery
 Project: https://github.com/peteboere/fuzzbox
 License: http://www.opensource.org/licenses/mit-license.php (MIT)
 Copyright: (c) 2012 Pete Boere
-Compiled: 2013-02-26 21:24:03 +0000
+Compiled: 2013-05-14 11:29:46 +0000
 
 */
 (function ($) { // start outer closure
 
 /*
- * Generic shortcuts and helper functions 
+ * Generic shortcuts and helper functions
  */
 
 var win = window;
@@ -88,7 +88,7 @@ var defer = function ( callback, timeout ) {
 var createElement = function ( tag ) {
     return doc.createElement( tag );
 };
-    
+
 var empty = function () {};
 
 var IE = ( !! win.ActiveXObject && +( /msie\s(\d+)/i.exec( navigator.userAgent )[1] ) ) || NaN;
@@ -232,7 +232,7 @@ fuzzbox.prototype = {
         // Make visible.
         fuzzbox._open();
 
-        raiseEvent( 'open' );
+        raiseEvent('open');
 
         // Capture the page focussed element then hand focus over to fuzzbox.
         self.trigger = doc.activeElement;
@@ -273,6 +273,10 @@ fuzzbox.prototype = {
             }
             else {
                 it.url = OPTIONS.url;
+
+                // Additional ajax information if supplied.
+                it.data = OPTIONS.data;
+                it.postData = OPTIONS.postData;
             }
             items = [it];
         }
@@ -461,21 +465,24 @@ fuzzbox.prototype = {
 
             insert = function ( item, mediaHandler ) {
 
-                // Clear the stage
+                // Clear the stage.
                 self.clearContentAreas();
 
-                // Set the media class hook
+                // Set the media class hook.
                 alterClass( DOM.$fuzzbox, 'fzz-media-*',
                     getMediaClassNames( item.media ).join( ' ' ) );
 
-                // Insert item content
-                handler.insert( item, contentArea, item.mediaArgs || OPTIONS.mediaArgs || {} );
+                raiseEvent('beforeInsert', {item: item});
 
-                // Set caption area
+                // Insert item content.
+                var mediaArgs = item.mediaArgs || OPTIONS.mediaArgs || {};
+                handler.insert(item, contentArea, mediaArgs);
+
+                // Set caption area.
                 var caption = item.caption || OPTIONS.caption;
                 var element = item.element;
                 if ( typeof caption === 'function' ) {
-                    // May set to undefined if there is no return value
+                    // May set to undefined if there is no return value.
                     caption = caption.call( element || {}, item );
                 }
                 else {
@@ -485,16 +492,15 @@ fuzzbox.prototype = {
                     DOM.$caption.append( caption );
                 }
 
-                // Fire insert event
-                raiseEvent( 'insert' );
+                raiseEvent('insert');
 
-                // Invoke any additional callback passed in
+                // Invoke any additional callback passed in.
                 callback && callback();
 
-                // Position the hero
+                // Position the hero.
                 fuzzbox.positionHero( item );
 
-                // Position the container
+                // Position the container.
                 fuzzbox.position();
             };
 
@@ -502,17 +508,16 @@ fuzzbox.prototype = {
         if ( ! handler.load ) {
 
             self.cancelLoadMsg();
-            raiseEvent( 'load' );
             displayItem( function () {
                 insert( item, mediaHandler );
             });
+            raiseEvent( 'load' );
         }
         // Load item then display
         else {
 
             handler.load( item, function () {
                 self.cancelLoadMsg();
-                raiseEvent( 'load' );
                 if ( item.errorMsg ) {
                     mediaHandler = 'error'
                     handler = fuzzbox.media[ mediaHandler ];
@@ -521,6 +526,7 @@ fuzzbox.prototype = {
                 displayItem( function () {
                     insert( item, mediaHandler );
                 });
+                raiseEvent( 'load' );
             });
         }
 
@@ -639,18 +645,18 @@ fuzzbox.prototype = {
 
         var self = this;
 
-        // Hide the fuzzbox
-        fuzzbox._close( function () {
+        // Hide the fuzzbox.
+        fuzzbox._close(function () {
 
-            raiseEvent( 'close' );
-
-            // Hand focus back to the page
-            if ( ITEM.element ) {
+            // Hand focus back to the page.
+            if (ITEM.element) {
                 ITEM.element.focus()
             }
             else {
                 self.trigger && self.trigger.focus();
             }
+
+            raiseEvent('close');
 
             self.cleanup();
         });
@@ -850,16 +856,24 @@ var getElemFuzzAttributes = function ( element ) {
 
 // Create fuzzbox media classnames
 var getMediaClassNames = function ( mediaType ) {
+
     var classnames = [];
     classnames.push( 'fzz-media-' + mediaType[0] );
     classnames.push( 'fzz-media-' + ( mediaType+'' ).replace( /\//, '-' ) );
     return classnames;
 };
 
-var raiseEvent = function ( eventType ) {
-    var eventTypeCap = 'on' + capitalize( eventType );
-    $doc.trigger( 'fzz_' + eventType );
-    INSTANCE && INSTANCE[eventTypeCap] && INSTANCE[eventTypeCap].call( INSTANCE );
+var raiseEvent = function (eventType, eventObject) {
+
+    var eventTypeCap = 'on' + capitalize(eventType);
+    var eventObject = eventObject || {};
+    eventObject.type = eventType;
+
+    $doc.trigger('fzz_' + eventType, eventObject);
+
+    if (INSTANCE && INSTANCE[eventTypeCap]) {
+        INSTANCE[eventTypeCap].call(INSTANCE, eventObject);
+    }
 };
 
 // Fade down old item, invoke insertCallback, fadeUp
@@ -919,24 +933,26 @@ extend( fuzzbox, {
 
 extend( fuzzbox, {
 
-    // Debug mode for logging messages to the console
+    // Debug mode for logging messages to the console.
     DEBUG: false,
 
-    // Status
+    // Status.
     opened: false,
 
-    // Reference to active fuzzbox instance (if any)
+    // Reference to active fuzzbox instance (if any).
     instance: null,
 
     // Inititalization:
-    //     Called once on first launch, subsequent calls will return early
+    //     Called once on first launch, subsequent calls will bounce.
     init: function () {
 
-        if ( fuzzbox.initialized ) { return; }
+        if (fuzzbox.initialized) {
+            return;
+        }
 
         // Create base html
         var $html = $(
-            '<div id="fuzzbox">' +
+            '<div id="fuzzbox" role="dialog">' +
                 '<div id="fzz-overlay"></div>' +
                 '<div id="fzz-outer">' +
                     '<div id="fzz-wrapper" tabindex="0">' +
@@ -949,12 +965,12 @@ extend( fuzzbox, {
 
         // Get dom references
         DOM.$fuzzbox  = $html,
-        DOM.$overlay  = $( '#fzz-overlay', $html );
-        DOM.$loading  = $( '#fzz-loading', $html );
-        DOM.$outer    = $( '#fzz-outer', $html );
-        DOM.$wrapper  = $( '#fzz-wrapper', $html );
-        DOM.$inner    = $( '#fzz-inner', $html );
-        DOM.$closeBtn = $( '#fzz-close', $html );
+        DOM.$overlay  = $('#fzz-overlay', $html);
+        DOM.$loading  = $('#fzz-loading', $html);
+        DOM.$outer    = $('#fzz-outer', $html);
+        DOM.$wrapper  = $('#fzz-wrapper', $html);
+        DOM.$inner    = $('#fzz-inner', $html);
+        DOM.$closeBtn = $('#fzz-close', $html);
 
         // Hide the loading screen
         DOM.$loading.hide();
@@ -1081,7 +1097,9 @@ extend( fuzzbox, {
             style.top = top + 'px';
             style.left = left + 'px';
         };
-        $wrapper.mousedown( function ( e ) {
+
+        $wrapper.on('mousedown.fuzzbox', function (e) {
+
             var $target = $( e.target );
             if ( $target.hasClass( 'fzz-handle' ) ) {
                 startDrag( e, $wrapper );
@@ -1100,16 +1118,16 @@ extend( fuzzbox, {
             }
         });
 
-        // Close with escape key
-        $doc.keyup( function ( e ) {
+        // Close with escape key.
+        $doc.on('keyup.fuzzbox', function (e) {
             var keycode = e.keyCode || e.which;
             if ( keycode === 27 && fuzzbox.opened && OPTIONS.closeOnPressEscape ) {
                 fuzzbox.close();
             }
         });
 
-        // Keyboard pagination
-        $doc.keydown( function ( e ) {
+        // Keyboard pagination.
+        $doc.on('keydown.fuzzbox', function (e) {
             var keycode = e.keyCode || e.which;
             if ( fuzzbox.opened ) {
                 if ( 37 === keycode ) {
@@ -1125,23 +1143,25 @@ extend( fuzzbox, {
             }
         });
 
-        // Handle window resize events
-        $win.resize( function () {
+        // Handle window resize events.
+        $win.on('resize.fuzzbox', function (e) {
+            if (! INSTANCE) {
+                return;
+            }
             fuzzbox.position();
             fuzzbox.positionHero();
             fuzzbox.setHeight();
         });
 
-        // Hide initially
+        // Hide initially.
         DOM.$fuzzbox.hide();
 
-        // Append to the dom
-        $( 'body' ).append( DOM.$fuzzbox );
+        // Append to the dom.
+        $('body').append(DOM.$fuzzbox);
 
-        // Call any init event handlers
-        raiseEvent( 'init' );
+        raiseEvent('init');
 
-        // Flag as done
+        // Flag as done.
         fuzzbox.initialized = true;
     },
 
@@ -1241,9 +1261,32 @@ extend( fuzzbox, {
         }
     },
 
+    setAriaLabel: function (elementId, context) {
+
+        var $label = elementId && $('#' + elementId, context || document);
+        if ($label && $label.length) {
+            DOM.$fuzzbox.attr('aria-labelledby', elementId);
+        }
+        else {
+            DOM.$fuzzbox.removeAttr('aria-labelledby');
+        }
+    },
+
+    setAriaDescription: function (elementId, context) {
+
+        var $label = elementId && $('#' + elementId, context || document);
+        if ($label && $label.length) {
+            DOM.$fuzzbox.attr('aria-describedby', elementId);
+        }
+        else {
+            DOM.$fuzzbox.removeAttr('aria-describedby');
+        }
+    },
+
     loadUrl: function ( url, item, callback ) {
-        // Html resources
-        $.ajax({
+
+        // HTML resources
+        var options = {
             url: url,
             success: function ( data ) {
                 item.html = data;
@@ -1253,11 +1296,20 @@ extend( fuzzbox, {
                 item.errorMsg = status;
                 callback( item );
             }
-        });
+        };
+
+        if (item.data) {
+            options.data = item.data;
+        }
+        if (item.postData) {
+            options.data = item.postData;
+            options.type = 'POST';
+        }
+        $.ajax(options);
     },
 
     loadImage: function ( url, item, callback ) {
-        // Images and svgs
+
         var img = new Image;
         img.onload = function () {
             item.image = img;
@@ -1275,6 +1327,7 @@ extend( fuzzbox, {
 
     // Creating some objects can be expensive
     getIframe: function ( reset ) {
+
         var iframe = DOM.iframe;
         if ( ! iframe ) {
             iframe = DOM.iframe = createElement( 'iframe' );
@@ -1443,21 +1496,21 @@ extend( fuzzbox, {
             },
 
             // insert: function ( item, contentArea, args ) {
-            // 
+            //
             //     var image = fuzzbox.getImage();
-            // 
+            //
             //     if ( ! image.parentNode ) {
             //         contentArea.appendChild( image );
             //     }
-            // 
+            //
             //     image.width = item.image.width;
             //     image.height = item.image.height;
             //     image.src = item.image.src;
-            // 
+            //
             //     // Always set the height
             //     // Passing in the item properties as the main image won't always be ready
             //     fuzzbox.setHeight( item.image.height );
-            // 
+            //
             //     // Shrink wrap to image dimensions (using max-width)
             //     if ( OPTIONS.exactFit ) {
             //         fuzzbox.setWidth( item.image.width );

@@ -48,6 +48,10 @@ $out_file = "$rootDir/jquery.fuzzbox.js";
 
 file_put_contents( $out_file, $stream );
 
+if (getenv('FUZZBOX_COMPRESS')) {
+    $compress = true;
+}
+
 if ( isset( $compress ) ) {
     
     $min_file = "$rootDir/jquery.fuzzbox.min.js";

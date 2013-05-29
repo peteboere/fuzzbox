@@ -78,7 +78,7 @@ fuzzbox.prototype = {
         // Make visible.
         fuzzbox._open();
 
-        raiseEvent( 'open' );
+        raiseEvent('open');
 
         // Capture the page focussed element then hand focus over to fuzzbox.
         self.trigger = doc.activeElement;
@@ -119,6 +119,10 @@ fuzzbox.prototype = {
             }
             else {
                 it.url = OPTIONS.url;
+
+                // Additional ajax information if supplied.
+                it.data = OPTIONS.data;
+                it.postData = OPTIONS.postData;
             }
             items = [it];
         }
@@ -307,21 +311,24 @@ fuzzbox.prototype = {
 
             insert = function ( item, mediaHandler ) {
 
-                // Clear the stage
+                // Clear the stage.
                 self.clearContentAreas();
 
-                // Set the media class hook
+                // Set the media class hook.
                 alterClass( DOM.$fuzzbox, 'fzz-media-*',
                     getMediaClassNames( item.media ).join( ' ' ) );
 
-                // Insert item content
-                handler.insert( item, contentArea, item.mediaArgs || OPTIONS.mediaArgs || {} );
+                raiseEvent('beforeInsert', {item: item});
 
-                // Set caption area
+                // Insert item content.
+                var mediaArgs = item.mediaArgs || OPTIONS.mediaArgs || {};
+                handler.insert(item, contentArea, mediaArgs);
+
+                // Set caption area.
                 var caption = item.caption || OPTIONS.caption;
                 var element = item.element;
                 if ( typeof caption === 'function' ) {
-                    // May set to undefined if there is no return value
+                    // May set to undefined if there is no return value.
                     caption = caption.call( element || {}, item );
                 }
                 else {
@@ -331,16 +338,15 @@ fuzzbox.prototype = {
                     DOM.$caption.append( caption );
                 }
 
-                // Fire insert event
-                raiseEvent( 'insert' );
+                raiseEvent('insert');
 
-                // Invoke any additional callback passed in
+                // Invoke any additional callback passed in.
                 callback && callback();
 
-                // Position the hero
+                // Position the hero.
                 fuzzbox.positionHero( item );
 
-                // Position the container
+                // Position the container.
                 fuzzbox.position();
             };
 
@@ -348,17 +354,16 @@ fuzzbox.prototype = {
         if ( ! handler.load ) {
 
             self.cancelLoadMsg();
-            raiseEvent( 'load' );
             displayItem( function () {
                 insert( item, mediaHandler );
             });
+            raiseEvent( 'load' );
         }
         // Load item then display
         else {
 
             handler.load( item, function () {
                 self.cancelLoadMsg();
-                raiseEvent( 'load' );
                 if ( item.errorMsg ) {
                     mediaHandler = 'error'
                     handler = fuzzbox.media[ mediaHandler ];
@@ -367,6 +372,7 @@ fuzzbox.prototype = {
                 displayItem( function () {
                     insert( item, mediaHandler );
                 });
+                raiseEvent( 'load' );
             });
         }
 
@@ -485,18 +491,18 @@ fuzzbox.prototype = {
 
         var self = this;
 
-        // Hide the fuzzbox
-        fuzzbox._close( function () {
+        // Hide the fuzzbox.
+        fuzzbox._close(function () {
 
-            raiseEvent( 'close' );
-
-            // Hand focus back to the page
-            if ( ITEM.element ) {
+            // Hand focus back to the page.
+            if (ITEM.element) {
                 ITEM.element.focus()
             }
             else {
                 self.trigger && self.trigger.focus();
             }
+
+            raiseEvent('close');
 
             self.cleanup();
         });
