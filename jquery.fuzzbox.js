@@ -5,7 +5,7 @@ Flexible media lightbox for jQuery
 Project: https://github.com/peteboere/fuzzbox
 License: http://www.opensource.org/licenses/mit-license.php (MIT)
 Copyright: (c) 2012 Pete Boere
-Compiled: 2013-05-14 11:29:46 +0000
+Compiled: 2013-06-25 16:20:08 +0100
 
 */
 (function ($) { // start outer closure
@@ -1133,12 +1133,10 @@ extend( fuzzbox, {
                 if ( 37 === keycode ) {
                     // left
                     fuzzbox.previous();
-                    e.preventDefault();
                 }
                 else if ( 39 === keycode ) {
                     // right
                     fuzzbox.next();
-                    e.preventDefault();
                 }
             }
         });
@@ -1397,7 +1395,7 @@ extend( fuzzbox, {
     },
 
     setWidth: function ( width ) {
-        widthMap = {
+        var widthMap = {
             'max-width': INSTANCE.dims.width || width || ''
         };
 

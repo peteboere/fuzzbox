@@ -204,12 +204,10 @@ extend( fuzzbox, {
                 if ( 37 === keycode ) {
                     // left
                     fuzzbox.previous();
-                    e.preventDefault();
                 }
                 else if ( 39 === keycode ) {
                     // right
                     fuzzbox.next();
-                    e.preventDefault();
                 }
             }
         });
@@ -468,7 +466,7 @@ extend( fuzzbox, {
     },
 
     setWidth: function ( width ) {
-        widthMap = {
+        var widthMap = {
             'max-width': INSTANCE.dims.width || width || ''
         };
 
