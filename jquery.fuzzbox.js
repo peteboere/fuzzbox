@@ -5,7 +5,7 @@ Flexible media lightbox for jQuery
 Project: https://github.com/peteboere/fuzzbox
 License: http://www.opensource.org/licenses/mit-license.php (MIT)
 Copyright: (c) 2012 Pete Boere
-Compiled: 2013-06-25 16:20:08 +0100
+Compiled: 2013-06-27 12:14:16 +0100
 
 */
 (function ($) { // start outer closure
@@ -232,8 +232,6 @@ fuzzbox.prototype = {
         // Make visible.
         fuzzbox._open();
 
-        raiseEvent('open');
-
         // Capture the page focussed element then hand focus over to fuzzbox.
         self.trigger = doc.activeElement;
         DOM.$wrapper.focus();
@@ -245,6 +243,7 @@ fuzzbox.prototype = {
         self.loadItem( ITEM, function () {
             defer( function () {
                 alterClass( DOM.$fuzzbox, 'fzz-startup', 'fzz-open' );
+                raiseEvent('open');
                 FIRST_ITEM = false;
             }, 50 );
         });

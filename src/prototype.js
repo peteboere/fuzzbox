@@ -78,8 +78,6 @@ fuzzbox.prototype = {
         // Make visible.
         fuzzbox._open();
 
-        raiseEvent('open');
-
         // Capture the page focussed element then hand focus over to fuzzbox.
         self.trigger = doc.activeElement;
         DOM.$wrapper.focus();
@@ -91,6 +89,7 @@ fuzzbox.prototype = {
         self.loadItem( ITEM, function () {
             defer( function () {
                 alterClass( DOM.$fuzzbox, 'fzz-startup', 'fzz-open' );
+                raiseEvent('open');
                 FIRST_ITEM = false;
             }, 50 );
         });
