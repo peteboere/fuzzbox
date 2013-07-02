@@ -181,7 +181,6 @@ extend( fuzzbox, {
             }
         });
 
-
         // Optionally close by clicking outside the content
         $( [ DOM.$overlay[0], DOM.$outer[0] ] ).click( function ( e ) {
             if ( e.target === this && OPTIONS.closeOnClickOutside ) {

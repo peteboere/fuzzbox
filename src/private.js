@@ -17,6 +17,9 @@ var FIRST_ITEM;
 // Shortcut ref to active instance options.
 var OPTIONS;
 
+// Window position.
+var SCROLL_TOP;
+
 // Flag. Lock UI paging controls during transitions.
 var UI_LOCKED;
 

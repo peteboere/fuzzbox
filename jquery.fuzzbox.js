@@ -5,7 +5,7 @@ Flexible media lightbox for jQuery
 Project: https://github.com/peteboere/fuzzbox
 License: http://www.opensource.org/licenses/mit-license.php (MIT)
 Copyright: (c) 2012 Pete Boere
-Compiled: 2013-06-27 12:14:16 +0100
+Compiled: 2013-07-02 14:03:14 +0100
 
 */
 (function ($) { // start outer closure
@@ -236,8 +236,9 @@ fuzzbox.prototype = {
         self.trigger = doc.activeElement;
         DOM.$wrapper.focus();
 
-        // Set first item flag true.
+        // Set state variables.
         FIRST_ITEM = true;
+        SCROLL_TOP = $(window).scrollTop();
 
         // Load the first item, remove startup styling hook when done.
         self.loadItem( ITEM, function () {
@@ -647,6 +648,8 @@ fuzzbox.prototype = {
         // Hide the fuzzbox.
         fuzzbox._close(function () {
 
+            $(window).scrollTop(SCROLL_TOP);
+
             // Hand focus back to the page.
             if (ITEM.element) {
                 ITEM.element.focus()
@@ -729,6 +732,9 @@ var FIRST_ITEM;
 
 // Shortcut ref to active instance options.
 var OPTIONS;
+
+// Window position.
+var SCROLL_TOP;
 
 // Flag. Lock UI paging controls during transitions.
 var UI_LOCKED;
@@ -1108,7 +1114,6 @@ extend( fuzzbox, {
                 return false;
             }
         });
-
 
         // Optionally close by clicking outside the content
         $( [ DOM.$overlay[0], DOM.$outer[0] ] ).click( function ( e ) {

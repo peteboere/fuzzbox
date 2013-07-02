@@ -12,11 +12,12 @@
     <!-- Fuzzbox demo themes. These can be appended to the core stylesheet to save bandwidth -->
     <link rel="stylesheet" href="fuzzbox-themes.css" />
 
-    <!-- Demo uses a spin.js loading spinner. Not required -->
-    <script src="../vendor/spin.min.js"></script>
-
     <!-- jquery.js -->
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+
+    <!-- Optional for demo -->
+    <script src="../vendor/jquery.mousewheel.js"></script>
+    <script src="../vendor/spin.min.js"></script>
 
 
     <!-- The fuzzbox script -->
@@ -127,6 +128,7 @@ $( '.grouped a' ).fuzzbox({
 $( '.solo a' ).fuzzbox({
     theme: 'slideshow solo', // Themes can be stacked
     exactFit: true,
+    fixedViewport: true,
     caption: function ( item ) {
         return $.fuzzbox.markdown( this.title || 'No title' );
     }

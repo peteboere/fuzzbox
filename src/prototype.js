@@ -82,8 +82,9 @@ fuzzbox.prototype = {
         self.trigger = doc.activeElement;
         DOM.$wrapper.focus();
 
-        // Set first item flag true.
+        // Set state variables.
         FIRST_ITEM = true;
+        SCROLL_TOP = $(window).scrollTop();
 
         // Load the first item, remove startup styling hook when done.
         self.loadItem( ITEM, function () {
@@ -492,6 +493,8 @@ fuzzbox.prototype = {
 
         // Hide the fuzzbox.
         fuzzbox._close(function () {
+
+            $(window).scrollTop(SCROLL_TOP);
 
             // Hand focus back to the page.
             if (ITEM.element) {
