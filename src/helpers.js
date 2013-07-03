@@ -4,8 +4,8 @@
 
 var win = window;
 var doc = document;
-var $win = $( win );
-var $doc = $( doc );
+var $window = $(win);
+var $document = $(doc);
 var extend = $.extend;
 var each = $.each;
 

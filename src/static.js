@@ -25,11 +25,13 @@ extend( fuzzbox, {
         var $html = $(
             '<div id="fuzzbox" role="dialog">' +
                 '<div id="fzz-overlay"></div>' +
-                '<div id="fzz-outer">' +
-                    '<div id="fzz-wrapper" tabindex="0">' +
-                        '<div id="fzz-inner"></div>' +
-                        '<div id="fzz-loading"></div>' +
-                        '<a id="fzz-close" href="modal:close"><span></span></a>' +
+                '<div id="fzz-viewport">' +
+                    '<div id="fzz-outer">' +
+                        '<div id="fzz-wrapper" tabindex="0">' +
+                            '<a id="fzz-close" href="modal:close"><span></span></a>' +
+                            '<div id="fzz-inner"></div>' +
+                            '<div id="fzz-loading"></div>' +
+                        '</div>' +
                     '</div>' +
                 '</div>' +
             '</div>' );
@@ -37,6 +39,7 @@ extend( fuzzbox, {
         // Get dom references
         DOM.$fuzzbox  = $html,
         DOM.$overlay  = $('#fzz-overlay', $html);
+        DOM.$viewport = $('#fzz-viewport', $html);
         DOM.$loading  = $('#fzz-loading', $html);
         DOM.$outer    = $('#fzz-outer', $html);
         DOM.$wrapper  = $('#fzz-wrapper', $html);
@@ -112,7 +115,7 @@ extend( fuzzbox, {
             var startY = parseInt( $el.css( 'top' ), 10 ) || 0;
             var handleOffsetX = pageX - left;
             var handleOffsetY = pageY - top;
-            var viewPortWidth = $win.width();
+            var viewPortWidth = $window.width();
 
             dragInfo = {
                 // Element
@@ -137,7 +140,7 @@ extend( fuzzbox, {
                     bL: handleOffsetX
                 }
             };
-            $doc.mousemove( onDragMove );
+            $document.mousemove( onDragMove );
         };
         var onDragMove = function ( e ) {
             var pageX = e.pageX;
@@ -174,8 +177,8 @@ extend( fuzzbox, {
             var $target = $( e.target );
             if ( $target.hasClass( 'fzz-handle' ) ) {
                 startDrag( e, $wrapper );
-                $doc.one( 'mouseup blur', function () {
-                    $doc.unbind( 'mousemove', onDragMove );
+                $document.one( 'mouseup blur', function () {
+                    $document.unbind( 'mousemove', onDragMove );
                 });
                 return false;
             }
@@ -189,7 +192,7 @@ extend( fuzzbox, {
         });
 
         // Close with escape key.
-        $doc.on('keyup.fuzzbox', function (e) {
+        $document.on('keyup.fuzzbox', function (e) {
             var keycode = e.keyCode || e.which;
             if ( keycode === 27 && fuzzbox.opened && OPTIONS.closeOnPressEscape ) {
                 fuzzbox.close();
@@ -197,7 +200,7 @@ extend( fuzzbox, {
         });
 
         // Keyboard pagination.
-        $doc.on('keydown.fuzzbox', function (e) {
+        $document.on('keydown.fuzzbox', function (e) {
             var keycode = e.keyCode || e.which;
             if ( fuzzbox.opened ) {
                 if ( 37 === keycode ) {
@@ -212,7 +215,7 @@ extend( fuzzbox, {
         });
 
         // Handle window resize events.
-        $win.on('resize.fuzzbox', function (e) {
+        $window.on('resize.fuzzbox', function (e) {
             if (! INSTANCE) {
                 return;
             }
@@ -237,7 +240,7 @@ extend( fuzzbox, {
     _open: function () {
 
         DOM.$fuzzbox.show();
-        fuzzbox.position();
+        fuzzbox.position(true);
         fuzzbox.opened = true;
     },
 
@@ -279,12 +282,12 @@ extend( fuzzbox, {
         INSTANCE && INSTANCE.goTo( dest );
     },
 
-    position: function () {
+    position: function (initialCentering) {
 
         var outer = DOM.$outer[0];
         var outerHeight = outer.offsetHeight;
-        var viewportHeight = $win.height();
-        var scrollTop = $win.scrollTop();
+        var viewportHeight = $window.height();
+        var scrollTop = $window.scrollTop();
         var top = 0;
         var vAlign = OPTIONS.vAlign;
 
@@ -301,7 +304,9 @@ extend( fuzzbox, {
             top = vAlign;
         }
 
-        top += scrollTop;
+        if (initialCentering || ! OPTIONS.fixedViewport) {
+            top += scrollTop;
+        }
         outer.style.top = top + 'px';
     },
 
@@ -563,28 +568,6 @@ extend( fuzzbox, {
                 });
             },
 
-            // insert: function ( item, contentArea, args ) {
-            //
-            //     var image = fuzzbox.getImage();
-            //
-            //     if ( ! image.parentNode ) {
-            //         contentArea.appendChild( image );
-            //     }
-            //
-            //     image.width = item.image.width;
-            //     image.height = item.image.height;
-            //     image.src = item.image.src;
-            //
-            //     // Always set the height
-            //     // Passing in the item properties as the main image won't always be ready
-            //     fuzzbox.setHeight( item.image.height );
-            //
-            //     // Shrink wrap to image dimensions (using max-width)
-            //     if ( OPTIONS.exactFit ) {
-            //         fuzzbox.setWidth( item.image.width );
-            //     }
-            // },
-
             insert: function ( item, contentArea, args ) {
 
                 var image = fuzzbox.getImage();
@@ -595,7 +578,7 @@ extend( fuzzbox, {
 
                 // Set the height if the content is smaller than the window viewport.
                 // The main image won't always be rendered on time.
-                var winWidth = $win.width();
+                var winWidth = $window.width();
                 var breakpoint = OPTIONS.fittingBreakpoint;
                 var applyBreakpoint = breakpoint && ( winWidth < breakpoint );
 

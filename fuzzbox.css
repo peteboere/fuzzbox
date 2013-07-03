@@ -9,7 +9,7 @@
 #fzz-inner {position:relative;}
 #fzz-content {overflow:hidden;min-height:10em;text-align:center;
 	-moz-box-sizing:border-box;-webkit-box-sizing:border-box;box-sizing:border-box;}
-#fzz-close {position:absolute;top:0;right:0;}
+#fzz-close {position:absolute;top:0;right:0;z-index:2;}
 #fzz-handle {display:none;}
 #fuzzbox .disabled {cursor:default;outline:0;}
 #fuzzbox iframe,
@@ -17,6 +17,9 @@
 #fuzzbox.fzz-itemcount-1 #fzz-next,
 #fuzzbox.fzz-itemcount-1 #fzz-previous {display:none;}
 #fzz-content img.fzz-hero {max-width:100%;height:auto;width:auto;vertical-align:middle;}
+
+.fzz-fixed, .fzz-fixed body {overflow:hidden;}
+.fzz-fixed #fzz-viewport {position:fixed;top:0;right:0;bottom:0;left:0;overflow:auto;overflow-y:scroll;overflow-x:auto;}
 
 /*
 ------------------ Styling guide --------------------

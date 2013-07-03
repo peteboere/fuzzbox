@@ -158,7 +158,7 @@ var raiseEvent = function (eventType, eventObject) {
     var eventObject = eventObject || {};
     eventObject.type = eventType;
 
-    $doc.trigger('fzz_' + eventType, eventObject);
+    $document.trigger('fzz_' + eventType, eventObject);
 
     if (INSTANCE && INSTANCE[eventTypeCap]) {
         INSTANCE[eventTypeCap].call(INSTANCE, eventObject);

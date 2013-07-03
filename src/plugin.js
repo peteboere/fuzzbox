@@ -18,7 +18,7 @@ $.fn.fuzzbox = function ( options ) {
         });
     }
 
-    $els.click( function () {
+    $els.click( function (e) {
 
         var box = new $.fuzzbox;
         var startIndex = 0;

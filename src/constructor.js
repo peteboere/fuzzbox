@@ -34,7 +34,10 @@ var fuzzbox = $.fuzzbox = function ( options ) {
         closeOnPressEscape: true,
 
         // Viewport width at which shrink-to-fit behaviour is disabled.
-        fittingBreakpoint: 0
+        fittingBreakpoint: 0,
+
+        // Fixed viewport mode.
+        fixedViewport: false
 
     }, options || {} );
 

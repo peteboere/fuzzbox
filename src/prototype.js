@@ -78,19 +78,47 @@ fuzzbox.prototype = {
         // Make visible.
         fuzzbox._open();
 
-        // Capture the page focussed element then hand focus over to fuzzbox.
-        self.trigger = doc.activeElement;
-        DOM.$wrapper.focus();
-
         // Set state variables.
         FIRST_ITEM = true;
-        SCROLL_TOP = $(window).scrollTop();
+        SCROLL_TOP = $window.scrollTop();
+
+        // Fixed viewport.
+        if (OPTIONS.fixedViewport) {
+            var $root = $('html');
+            var $body = $(document.body);
+
+            $document.one('fzz_open', function () {
+
+                // Get scrollbar width.
+                var originalWindowWidth = $window.width();
+                $root.addClass('fzz-fixed');
+
+                var scrollbar = (originalWindowWidth - $window.width());
+                if (scrollbar) {
+                    $body.css('border-right', 'solid ' + Math.abs(scrollbar) + 'px #eee');
+                }
+
+                var scrollToTop = function () {
+                    DOM.$viewport.scrollTop(0);
+                };
+                scrollToTop()
+            })
+            $document.one('fzz_close', function () {
+                $root.removeClass('fzz-fixed');
+                $body.css('border-right', '');
+            });
+        }
 
         // Load the first item, remove startup styling hook when done.
         self.loadItem( ITEM, function () {
             defer( function () {
                 alterClass( DOM.$fuzzbox, 'fzz-startup', 'fzz-open' );
                 raiseEvent('open');
+
+                // Capture the page focussed element then hand focus over to fuzzbox.
+                self.trigger = doc.activeElement;
+                DOM.$wrapper.focus();
+
                 FIRST_ITEM = false;
             }, 50 );
         });

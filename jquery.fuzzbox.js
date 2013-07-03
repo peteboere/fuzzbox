@@ -5,7 +5,7 @@ Flexible media lightbox for jQuery
 Project: https://github.com/peteboere/fuzzbox
 License: http://www.opensource.org/licenses/mit-license.php (MIT)
 Copyright: (c) 2012 Pete Boere
-Compiled: 2013-07-02 14:03:14 +0100
+Compiled: 2013-07-03 11:30:46 +0100
 
 */
 (function ($) { // start outer closure
@@ -16,8 +16,8 @@ Compiled: 2013-07-02 14:03:14 +0100
 
 var win = window;
 var doc = document;
-var $win = $( win );
-var $doc = $( doc );
+var $window = $(win);
+var $document = $(doc);
 var extend = $.extend;
 var each = $.each;
 
@@ -146,7 +146,10 @@ var fuzzbox = $.fuzzbox = function ( options ) {
         closeOnPressEscape: true,
 
         // Viewport width at which shrink-to-fit behaviour is disabled.
-        fittingBreakpoint: 0
+        fittingBreakpoint: 0,
+
+        // Fixed viewport mode.
+        fixedViewport: false
 
     }, options || {} );
 
@@ -232,19 +235,47 @@ fuzzbox.prototype = {
         // Make visible.
         fuzzbox._open();
 
-        // Capture the page focussed element then hand focus over to fuzzbox.
-        self.trigger = doc.activeElement;
-        DOM.$wrapper.focus();
-
         // Set state variables.
         FIRST_ITEM = true;
-        SCROLL_TOP = $(window).scrollTop();
+        SCROLL_TOP = $window.scrollTop();
+
+        // Fixed viewport.
+        if (OPTIONS.fixedViewport) {
+            var $root = $('html');
+            var $body = $(document.body);
+
+            $document.one('fzz_open', function () {
+
+                // Get scrollbar width.
+                var originalWindowWidth = $window.width();
+                $root.addClass('fzz-fixed');
+
+                var scrollbar = (originalWindowWidth - $window.width());
+                if (scrollbar) {
+                    $body.css('border-right', 'solid ' + Math.abs(scrollbar) + 'px #eee');
+                }
+
+                var scrollToTop = function () {
+                    DOM.$viewport.scrollTop(0);
+                };
+                scrollToTop()
+            })
+            $document.one('fzz_close', function () {
+                $root.removeClass('fzz-fixed');
+                $body.css('border-right', '');
+            });
+        }
 
         // Load the first item, remove startup styling hook when done.
         self.loadItem( ITEM, function () {
             defer( function () {
                 alterClass( DOM.$fuzzbox, 'fzz-startup', 'fzz-open' );
                 raiseEvent('open');
+
+                // Capture the page focussed element then hand focus over to fuzzbox.
+                self.trigger = doc.activeElement;
+                DOM.$wrapper.focus();
+
                 FIRST_ITEM = false;
             }, 50 );
         });
@@ -874,7 +905,7 @@ var raiseEvent = function (eventType, eventObject) {
     var eventObject = eventObject || {};
     eventObject.type = eventType;
 
-    $doc.trigger('fzz_' + eventType, eventObject);
+    $document.trigger('fzz_' + eventType, eventObject);
 
     if (INSTANCE && INSTANCE[eventTypeCap]) {
         INSTANCE[eventTypeCap].call(INSTANCE, eventObject);
@@ -959,11 +990,13 @@ extend( fuzzbox, {
         var $html = $(
             '<div id="fuzzbox" role="dialog">' +
                 '<div id="fzz-overlay"></div>' +
-                '<div id="fzz-outer">' +
-                    '<div id="fzz-wrapper" tabindex="0">' +
-                        '<div id="fzz-inner"></div>' +
-                        '<div id="fzz-loading"></div>' +
-                        '<a id="fzz-close" href="modal:close"><span></span></a>' +
+                '<div id="fzz-viewport">' +
+                    '<div id="fzz-outer">' +
+                        '<div id="fzz-wrapper" tabindex="0">' +
+                            '<a id="fzz-close" href="modal:close"><span></span></a>' +
+                            '<div id="fzz-inner"></div>' +
+                            '<div id="fzz-loading"></div>' +
+                        '</div>' +
                     '</div>' +
                 '</div>' +
             '</div>' );
@@ -971,6 +1004,7 @@ extend( fuzzbox, {
         // Get dom references
         DOM.$fuzzbox  = $html,
         DOM.$overlay  = $('#fzz-overlay', $html);
+        DOM.$viewport = $('#fzz-viewport', $html);
         DOM.$loading  = $('#fzz-loading', $html);
         DOM.$outer    = $('#fzz-outer', $html);
         DOM.$wrapper  = $('#fzz-wrapper', $html);
@@ -1046,7 +1080,7 @@ extend( fuzzbox, {
             var startY = parseInt( $el.css( 'top' ), 10 ) || 0;
             var handleOffsetX = pageX - left;
             var handleOffsetY = pageY - top;
-            var viewPortWidth = $win.width();
+            var viewPortWidth = $window.width();
 
             dragInfo = {
                 // Element
@@ -1071,7 +1105,7 @@ extend( fuzzbox, {
                     bL: handleOffsetX
                 }
             };
-            $doc.mousemove( onDragMove );
+            $document.mousemove( onDragMove );
         };
         var onDragMove = function ( e ) {
             var pageX = e.pageX;
@@ -1108,8 +1142,8 @@ extend( fuzzbox, {
             var $target = $( e.target );
             if ( $target.hasClass( 'fzz-handle' ) ) {
                 startDrag( e, $wrapper );
-                $doc.one( 'mouseup blur', function () {
-                    $doc.unbind( 'mousemove', onDragMove );
+                $document.one( 'mouseup blur', function () {
+                    $document.unbind( 'mousemove', onDragMove );
                 });
                 return false;
             }
@@ -1123,7 +1157,7 @@ extend( fuzzbox, {
         });
 
         // Close with escape key.
-        $doc.on('keyup.fuzzbox', function (e) {
+        $document.on('keyup.fuzzbox', function (e) {
             var keycode = e.keyCode || e.which;
             if ( keycode === 27 && fuzzbox.opened && OPTIONS.closeOnPressEscape ) {
                 fuzzbox.close();
@@ -1131,7 +1165,7 @@ extend( fuzzbox, {
         });
 
         // Keyboard pagination.
-        $doc.on('keydown.fuzzbox', function (e) {
+        $document.on('keydown.fuzzbox', function (e) {
             var keycode = e.keyCode || e.which;
             if ( fuzzbox.opened ) {
                 if ( 37 === keycode ) {
@@ -1146,7 +1180,7 @@ extend( fuzzbox, {
         });
 
         // Handle window resize events.
-        $win.on('resize.fuzzbox', function (e) {
+        $window.on('resize.fuzzbox', function (e) {
             if (! INSTANCE) {
                 return;
             }
@@ -1171,7 +1205,7 @@ extend( fuzzbox, {
     _open: function () {
 
         DOM.$fuzzbox.show();
-        fuzzbox.position();
+        fuzzbox.position(true);
         fuzzbox.opened = true;
     },
 
@@ -1213,12 +1247,12 @@ extend( fuzzbox, {
         INSTANCE && INSTANCE.goTo( dest );
     },
 
-    position: function () {
+    position: function (initialCentering) {
 
         var outer = DOM.$outer[0];
         var outerHeight = outer.offsetHeight;
-        var viewportHeight = $win.height();
-        var scrollTop = $win.scrollTop();
+        var viewportHeight = $window.height();
+        var scrollTop = $window.scrollTop();
         var top = 0;
         var vAlign = OPTIONS.vAlign;
 
@@ -1235,7 +1269,9 @@ extend( fuzzbox, {
             top = vAlign;
         }
 
-        top += scrollTop;
+        if (initialCentering || ! OPTIONS.fixedViewport) {
+            top += scrollTop;
+        }
         outer.style.top = top + 'px';
     },
 
@@ -1497,28 +1533,6 @@ extend( fuzzbox, {
                 });
             },
 
-            // insert: function ( item, contentArea, args ) {
-            //
-            //     var image = fuzzbox.getImage();
-            //
-            //     if ( ! image.parentNode ) {
-            //         contentArea.appendChild( image );
-            //     }
-            //
-            //     image.width = item.image.width;
-            //     image.height = item.image.height;
-            //     image.src = item.image.src;
-            //
-            //     // Always set the height
-            //     // Passing in the item properties as the main image won't always be ready
-            //     fuzzbox.setHeight( item.image.height );
-            //
-            //     // Shrink wrap to image dimensions (using max-width)
-            //     if ( OPTIONS.exactFit ) {
-            //         fuzzbox.setWidth( item.image.width );
-            //     }
-            // },
-
             insert: function ( item, contentArea, args ) {
 
                 var image = fuzzbox.getImage();
@@ -1529,7 +1543,7 @@ extend( fuzzbox, {
 
                 // Set the height if the content is smaller than the window viewport.
                 // The main image won't always be rendered on time.
-                var winWidth = $win.width();
+                var winWidth = $window.width();
                 var breakpoint = OPTIONS.fittingBreakpoint;
                 var applyBreakpoint = breakpoint && ( winWidth < breakpoint );
 
@@ -1679,7 +1693,7 @@ $.fn.fuzzbox = function ( options ) {
         });
     }
 
-    $els.click( function () {
+    $els.click( function (e) {
 
         var box = new $.fuzzbox;
         var startIndex = 0;
