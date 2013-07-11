@@ -37,7 +37,10 @@ var fuzzbox = $.fuzzbox = function ( options ) {
         fittingBreakpoint: 0,
 
         // Fixed viewport mode.
-        fixedViewport: false
+        fixedViewport: false,
+
+        // The ARIA role that applies to the box.
+        role: 'dialog'
 
     }, options || {} );
 

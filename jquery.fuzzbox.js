@@ -5,7 +5,7 @@ Flexible media lightbox for jQuery
 Project: https://github.com/peteboere/fuzzbox
 License: http://www.opensource.org/licenses/mit-license.php (MIT)
 Copyright: (c) 2012 Pete Boere
-Compiled: 2013-07-09 16:28:51 +0100
+Compiled: 2013-07-11 15:09:44 +0100
 
 */
 (function ($) { // start outer closure
@@ -149,7 +149,10 @@ var fuzzbox = $.fuzzbox = function ( options ) {
         fittingBreakpoint: 0,
 
         // Fixed viewport mode.
-        fixedViewport: false
+        fixedViewport: false,
+
+        // The ARIA role that applies to the box.
+        role: 'dialog'
 
     }, options || {} );
 
@@ -283,7 +286,11 @@ fuzzbox.prototype = {
                     $focusElement.last().focus();
                 });
 
-                alterClass( DOM.$fuzzbox, 'fzz-startup', 'fzz-open' );
+                // Automatically set ARIA labelledby if an element with id `fzz-title` is found.
+                fuzzbox.setAriaLabel('fzz-title', DOM.$content);
+
+                alterClass(DOM.$fuzzbox, 'fzz-startup', 'fzz-open');
+                fuzzbox.position();
                 raiseEvent('open');
             }, 50 );
         });
@@ -419,10 +426,13 @@ fuzzbox.prototype = {
             ];
 
         // Add startup hook if launching.
-        if ( startup ) {
-            classnames.push( 'fzz-startup' );
+        if (startup) {
+            classnames.push('fzz-startup');
         }
-        DOM.$fuzzbox.attr( 'class', classnames.join( ' ' ) );
+        DOM.$fuzzbox.attr('class', classnames.join(' '));
+
+        // Set ARIA role.
+        DOM.$fuzzbox.attr('role', OPTIONS.role);
 
         // Set wrapper dimensions
         var width = 'width' in OPTIONS ? OPTIONS.width : '';
@@ -1158,7 +1168,7 @@ extend( fuzzbox, {
         });
 
         // Optionally close by clicking outside the content
-        $( [ DOM.$overlay[0], DOM.$outer[0] ] ).click( function ( e ) {
+        $( [ DOM.$overlay[0], DOM.$outer[0], DOM.$viewport[0] ] ).click( function ( e ) {
             if ( e.target === this && OPTIONS.closeOnClickOutside ) {
                 fuzzbox.close();
             }

@@ -126,7 +126,11 @@ fuzzbox.prototype = {
                     $focusElement.last().focus();
                 });
 
-                alterClass( DOM.$fuzzbox, 'fzz-startup', 'fzz-open' );
+                // Automatically set ARIA labelledby if an element with id `fzz-title` is found.
+                fuzzbox.setAriaLabel('fzz-title', DOM.$content);
+
+                alterClass(DOM.$fuzzbox, 'fzz-startup', 'fzz-open');
+                fuzzbox.position();
                 raiseEvent('open');
             }, 50 );
         });
@@ -262,10 +266,13 @@ fuzzbox.prototype = {
             ];
 
         // Add startup hook if launching.
-        if ( startup ) {
-            classnames.push( 'fzz-startup' );
+        if (startup) {
+            classnames.push('fzz-startup');
         }
-        DOM.$fuzzbox.attr( 'class', classnames.join( ' ' ) );
+        DOM.$fuzzbox.attr('class', classnames.join(' '));
+
+        // Set ARIA role.
+        DOM.$fuzzbox.attr('role', OPTIONS.role);
 
         // Set wrapper dimensions
         var width = 'width' in OPTIONS ? OPTIONS.width : '';
