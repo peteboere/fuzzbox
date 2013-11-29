@@ -367,6 +367,7 @@ extend( fuzzbox, {
             },
             error: function ( jqxhr, status ) {
                 item.errorMsg = status;
+                item.xhr = jqxhr;
                 callback( item );
             }
         };
