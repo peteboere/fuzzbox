@@ -1,12 +1,11 @@
-/*!
+/*! @preserve
 
 Flexible media lightbox for jQuery
 
 Project: https://github.com/peteboere/fuzzbox
-License: http://www.opensource.org/licenses/mit-license.php (MIT)
-Copyright: (c) 2012 Pete Boere
-Compiled: 2013-11-29 16:17:33 +0000
-
+License: MIT
+Copyright: (c) 2013 Pete Boere
+Compiled: 2013-12-05 10:53:32 +0000
 */
 (function ($) { // start outer closure
 
@@ -91,7 +90,7 @@ var createElement = function ( tag ) {
 
 var empty = function () {};
 
-var IE = ( !! win.ActiveXObject && +( /msie\s(\d+)/i.exec( navigator.userAgent )[1] ) ) || NaN;
+// var IE = ( !! win.ActiveXObject && +( /msie\s(\d+)/i.exec( navigator.userAgent )[1] ) ) || NaN;
 
 
 // Prevent console from crashing old browsers
@@ -284,7 +283,7 @@ fuzzbox.prototype = {
                 }
                 defer(function () {
                     $focusElement.last().focus();
-                });
+                }, 100);
 
                 // Automatically set ARIA labelledby if an element with id `fzz-title` is found.
                 fuzzbox.setAriaLabel('fzz-title', DOM.$content);

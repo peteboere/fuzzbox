@@ -79,7 +79,7 @@ var createElement = function ( tag ) {
 
 var empty = function () {};
 
-var IE = ( !! win.ActiveXObject && +( /msie\s(\d+)/i.exec( navigator.userAgent )[1] ) ) || NaN;
+// var IE = ( !! win.ActiveXObject && +( /msie\s(\d+)/i.exec( navigator.userAgent )[1] ) ) || NaN;
 
 
 // Prevent console from crashing old browsers

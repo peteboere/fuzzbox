@@ -124,7 +124,7 @@ fuzzbox.prototype = {
                 }
                 defer(function () {
                     $focusElement.last().focus();
-                });
+                }, 100);
 
                 // Automatically set ARIA labelledby if an element with id `fzz-title` is found.
                 fuzzbox.setAriaLabel('fzz-title', DOM.$content);
